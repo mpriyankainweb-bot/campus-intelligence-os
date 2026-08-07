@@ -182,3 +182,84 @@ export const PRINCIPAL_NOTIFICATIONS = [
   { id: 2, type: "warning" as Severity, title: "Approvals queue", body: "3 high-impact actions pending.", time: "4h ago", unread: true },
   { id: 3, type: "success" as Severity, title: "Grant approved", body: "Applied AI lab research grant confirmed.", time: "1d ago", unread: false },
 ];
+
+// --------------------------------------------------- Extended student data ---
+
+export const INTERNAL_MARKS = [
+  { course: "Data Structures", internal: 24, max: 30 },
+  { course: "Operating Systems", internal: 21, max: 30 },
+  { course: "Discrete Mathematics", internal: 17, max: 30 },
+  { course: "Computer Networks", internal: 27, max: 30 },
+];
+
+export const SEMESTER_PROGRESS = {
+  weeksCompleted: 8,
+  totalWeeks: 16,
+  semester: "Semester 6",
+};
+
+export const UPCOMING_EXAMS = [
+  { id: 1, title: "Computer Networks — Unit Test 2", date: "Aug 10", time: "9:30 AM", hall: "Exam Hall 1" },
+  { id: 2, title: "Data Structures — Midterm", date: "Aug 13", time: "9:30 AM", hall: "Exam Hall 2" },
+  { id: 3, title: "Discrete Mathematics — Quiz", date: "Aug 17", time: "10:00 AM", hall: "A-101" },
+];
+
+export const RESUME_SCORE = 78;
+
+export const CLUB_RECOMMENDATIONS = [
+  { id: 1, name: "AI & ML Society", match: "96%", why: "Your network project aligns with their NLP track" },
+  { id: 2, name: "Competitive Programming Club", match: "88%", why: "Strong Data Structures fundamentals" },
+  { id: 3, name: "Robotics SIG", match: "74%", why: "Lab experience in OS scheduling" },
+];
+
+export const WORKSHOPS = [
+  { id: 1, title: "Generative AI & Prompt Engineering", date: "Tomorrow, 10 AM", status: "Open" },
+  { id: 2, title: "Startup Weekend — Idea to MVP", date: "Aug 15, 11 AM", status: "Open" },
+  { id: 3, title: "Interview Prep Bootcamp", date: "Aug 10, 6 PM", status: "Waitlist" },
+];
+
+export const SCHOLARSHIP_STATUS = {
+  name: "Merit-cum-Means Scholarship",
+  status: "Under review",
+  amount: "₹50,000 / year",
+  progress: 70,
+};
+
+export const FEE_STATUS = {
+  semester: "Semester 6",
+  paid: "₹42,000",
+  total: "₹42,000",
+  status: "Paid in full",
+};
+
+// --------------------------------------------------- Extended faculty data ---
+
+export const DEPARTMENT_PERFORMANCE = [
+  { metric: "Avg attendance", value: "84%", delta: "+2%" },
+  { metric: "Pass rate", value: "91%", delta: "+3%" },
+  { metric: "Placement rate", value: "78%", delta: "+6%" },
+  { metric: "Research output", value: "24 papers", delta: "+8" },
+];
+
+export const PERSONAL_TASKS = [
+  { id: 1, task: "Grade CS301 Graph Algorithms submissions", due: "Tomorrow", done: false, priority: "high" },
+  { id: 2, task: "Submit attendance intervention reports for CS305", due: "In 3 days", done: false, priority: "medium" },
+  { id: 3, task: "Prepare Unit Test 2 question paper — Networks", due: "In 5 days", done: false, priority: "medium" },
+  { id: 4, task: "Approve lab manual v2 for OS Lab", due: "Done", done: true, priority: "low" },
+];
+
+// ------------------------------------------------- Extended principal data ---
+
+export const GRIEVANCES = [
+  { id: 1, student: "R. Sharma (CSE Y3)", category: "Fee waiver", status: "pending", age: "2d" },
+  { id: 2, student: "P. Nair (ECE Y2)", category: "Hostel issue", status: "pending", age: "1d" },
+  { id: 3, student: "A. Khan (ME Y4)", category: "Exam re-evaluation", status: "resolved", age: "4d" },
+  { id: 4, student: "S. Reddy (MBA Y1)", category: "Course conflict", status: "pending", age: "5h" },
+];
+
+export const BUDGET_OVERVIEW = [
+  { category: "Academic programs", allocated: 420, spent: 318, unit: "₹L" },
+  { category: "Infrastructure", allocated: 260, spent: 143, unit: "₹L" },
+  { category: "Scholarships & aid", allocated: 120, spent: 96, unit: "₹L" },
+  { category: "Research & innovation", allocated: 180, spent: 91, unit: "₹L" },
+];

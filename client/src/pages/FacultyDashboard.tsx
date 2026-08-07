@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import {
   Bar,
   BarChart,
@@ -24,9 +25,11 @@ import {
 } from "recharts";
 import {
   BookOpen,
+  Building2,
   Check,
   ClipboardList,
   GraduationCap,
+  ListTodo,
   Megaphone,
   NotebookPen,
   Sparkles,
@@ -36,10 +39,12 @@ import {
 import {
   ANNOUNCEMENTS,
   ASSIGNMENT_REVIEWS,
+  DEPARTMENT_PERFORMANCE,
   FACULTY_ATTENDANCE,
   FACULTY_CLASSES,
   FACULTY_NOTIFICATIONS,
   LEAVE_REQUESTS,
+  PERSONAL_TASKS,
   STUDENT_PERFORMANCE,
 } from "@/lib/dashboardData";
 
@@ -68,8 +73,14 @@ export default function FacultyDashboard() {
   const brief = trpc.brief.useQuery(undefined, { enabled: Boolean(authUser), retry: false });
   const actionsQuery = trpc.actions.useQuery(undefined, { enabled: Boolean(authUser), retry: false });
   const [leaveRequests, setLeaveRequests] = useState(LEAVE_REQUESTS);
+  const [personalTasks, setPersonalTasks] = useState(PERSONAL_TASKS);
 
   const pendingApprovals = actionsQuery.data?.length ?? 0;
+
+  const toggleTask = (id: number) =>
+    setPersonalTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
 
   const decideLeave = (id: number, decision: "approved" | "rejected") =>
     setLeaveRequests((prev) => prev.map((l) => (l.id === id ? { ...l, status: decision } : l)));
@@ -365,6 +376,88 @@ export default function FacultyDashboard() {
                 ? "Loading your tasks…"
                 : brief.data?.content ?? "Your daily tasks will appear here."}
             </p>
+          </SectionCard>
+        </Reveal>
+      </div>
+
+      {/* Department performance + personal tasks */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Reveal>
+          <SectionCard
+            title="Department performance"
+            description="Computer Science · this semester"
+            action={
+              <Badge className="gap-1 bg-blue-50 text-blue-700 ring-1 ring-blue-200">
+                <Building2 className="size-3" /> CSE
+              </Badge>
+            }
+          >
+            <div className="grid grid-cols-2 gap-3">
+              {DEPARTMENT_PERFORMANCE.map((d) => (
+                <div key={d.metric} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    {d.metric}
+                  </p>
+                  <p className="mt-1 text-xl font-bold text-slate-900">{d.value}</p>
+                  <p className="mt-0.5 text-[11px] font-medium text-emerald-600">{d.delta}</p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <SectionCard
+            title="Personal tasks"
+            description="Your to-dos for the week"
+            action={
+              <Badge variant="secondary">
+                {personalTasks.filter((t) => !t.done).length} left
+              </Badge>
+            }
+          >
+            <ul className="space-y-2.5">
+              {personalTasks.map((t) => (
+                <li key={t.id}>
+                  <button
+                    onClick={() => toggleTask(t.id)}
+                    className="flex w-full items-start gap-3 rounded-xl border border-slate-100 p-3 text-left transition-colors hover:bg-slate-50"
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
+                        t.done
+                          ? "border-emerald-500 bg-emerald-500 text-white"
+                          : "border-slate-300 text-transparent"
+                      )}
+                    >
+                      <Check className="size-3" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block text-sm font-medium",
+                          t.done ? "text-slate-400 line-through" : "text-slate-800"
+                        )}
+                      >
+                        {t.task}
+                      </span>
+                      <span className="text-[11px] text-slate-400">{t.due}</span>
+                    </span>
+                    <ListTodo
+                      className={cn(
+                        "mt-0.5 size-4 shrink-0",
+                        t.priority === "high"
+                          ? "text-rose-400"
+                          : t.priority === "medium"
+                            ? "text-amber-400"
+                            : "text-slate-300"
+                      )}
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </SectionCard>
         </Reveal>
       </div>

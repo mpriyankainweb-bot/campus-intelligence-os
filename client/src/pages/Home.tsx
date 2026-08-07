@@ -108,6 +108,8 @@ export default function Home() {
   const meQuery = trpc.auth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: false });
   const demoLogin = trpc.auth.demoLogin.useMutation();
   const signup = trpc.auth.signup.useMutation();
+  const localSignup = trpc.auth.localSignup.useMutation();
+  const localLogin = trpc.auth.localLogin.useMutation();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -126,7 +128,10 @@ export default function Home() {
     setBusy("signin");
     try {
       if (!supabase) {
-        setAuthError("Supabase isn't configured yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Keys tab, or use a demo persona below.");
+        // Demo mode: sign in against the in-memory local account registry.
+        const result = await localLogin.mutateAsync({ email, password });
+        await utils.auth.me.invalidate();
+        setLocation(result.redirectTo);
         return;
       }
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -137,6 +142,8 @@ export default function Home() {
       const userPersona = personaFromUser(data.user);
       await utils.auth.me.invalidate();
       setLocation(`/dashboard/${userPersona}`);
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : "Sign in failed. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -152,7 +159,10 @@ export default function Home() {
     setBusy("signup");
     try {
       if (!supabase) {
-        setAuthError("Supabase isn't configured yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Keys tab first.");
+        // Demo mode: create the account in-memory and sign straight in.
+        const result = await localSignup.mutateAsync({ email, password, fullName, persona });
+        await utils.auth.me.invalidate();
+        setLocation(result.redirectTo);
         return;
       }
       await signup.mutateAsync({ email, password, fullName, persona });
@@ -334,9 +344,10 @@ export default function Home() {
 
                 {!isSupabaseConfigured && (
                   <div className="mb-5 rounded-xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-xs leading-relaxed text-amber-200">
-                    Supabase keys aren't set yet. Add <code className="font-mono">VITE_SUPABASE_URL</code> and{" "}
+                    Supabase keys aren't set — accounts are stored in this session (built-in demo mode).
+                    Add <code className="font-mono">VITE_SUPABASE_URL</code> and{" "}
                     <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> in the Keys tab to enable
-                    email accounts — demo personas work right away.
+                    persistent cloud accounts. Demo personas work right away.
                   </div>
                 )}
 

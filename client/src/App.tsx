@@ -8,6 +8,9 @@ import Home from "./pages/Home";
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
 import PrincipalDashboard from "./pages/PrincipalDashboard";
+import Calendar from "./pages/Calendar";
+import Events from "./pages/Events";
+import Notifications from "./pages/Notifications";
 
 function Router() {
   return (
@@ -16,6 +19,9 @@ function Router() {
       <Route path="/dashboard/student" component={StudentDashboard} />
       <Route path="/dashboard/faculty" component={FacultyDashboard} />
       <Route path="/dashboard/principal" component={PrincipalDashboard} />
+      <Route path="/calendar" component={Calendar} />
+      <Route path="/events" component={Events} />
+      <Route path="/notifications" component={Notifications} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

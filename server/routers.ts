@@ -18,6 +18,22 @@ import {
   demoApproveAction,
   demoRejectAction,
 } from "./lib/demo/actions";
+import {
+  localSignup as storeLocalSignup,
+  localLogin as storeLocalLogin,
+} from "./lib/demo/users";
+import {
+  listCampusEvents,
+  registerForEvent as registerCampusEvent,
+  isRegistered,
+} from "./lib/demo/events";
+import { getCalendarEvents } from "./lib/demo/calendar";
+import {
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  pushNotification,
+} from "./lib/demo/notifications";
 
 export const appRouter = router({
   system: systemRouter,
@@ -122,6 +138,85 @@ export const appRouter = router({
         return {
           success: true,
           redirectTo: `/dashboard/${input.persona}`,
+        } as const;
+      }),
+
+    /**
+     * Local sign-up fallback (no Supabase needed): stores the account in an
+     * in-memory registry and signs the user straight in, personalized with
+     * their real name. Works alongside demo personas and never blocks.
+     */
+    localSignup: publicProcedure
+      .input(
+        z.object({
+          fullName: z.string().min(1, "Full name is required"),
+          email: z.string().email(),
+          password: z.string().min(8, "Password must be at least 8 characters"),
+          persona: z.enum(["student", "faculty", "principal"]),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const result = storeLocalSignup({
+          fullName: input.fullName.trim(),
+          email: input.email,
+          password: input.password,
+          persona: input.persona,
+        });
+        if (!result.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error ?? "Sign-up failed",
+          });
+        }
+
+        const openId = `demo-${input.persona}`;
+        await db.upsertUser({
+          openId,
+          fullName: input.fullName.trim(),
+          email: input.email,
+          persona: input.persona,
+          lastSignedIn: new Date(),
+        });
+        const token = await sdk.createSessionToken(openId, {
+          name: input.fullName.trim(),
+        });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
+
+        return {
+          success: true,
+          redirectTo: `/dashboard/${input.persona}`,
+        } as const;
+      }),
+
+    /**
+     * Local sign-in fallback: validates against the in-memory registry and
+     * signs the user in with their stored name and persona.
+     */
+    localLogin: publicProcedure
+      .input(z.object({ email: z.string().email(), password: z.string().min(1) }))
+      .mutation(async ({ input, ctx }) => {
+        const result = storeLocalLogin(input.email, input.password);
+        if (!result.ok) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: result.error });
+        }
+
+        const { fullName, persona } = result.account;
+        const openId = `demo-${persona}`;
+        await db.upsertUser({
+          openId,
+          fullName,
+          email: result.account.email,
+          persona,
+          lastSignedIn: new Date(),
+        });
+        const token = await sdk.createSessionToken(openId, { name: fullName });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
+
+        return {
+          success: true,
+          redirectTo: `/dashboard/${persona}`,
         } as const;
       }),
   }),
@@ -274,6 +369,74 @@ export const appRouter = router({
         console.warn("[Dashboard] opportunities fallback:", error);
         return DEMO_CAREER_OPPORTUNITIES;
       }
+    }),
+  }),
+
+  events: router({
+    /** Browse campus events + the current user's registrations. */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return { events: [] };
+      const userKey = `${ctx.user.persona}:${ctx.user.id}`;
+      const events = listCampusEvents().map((e) => ({
+        ...e,
+        isRegistered: isRegistered(userKey, e.id),
+      }));
+      return { events };
+    }),
+
+    /** Register for a campus event: confirms, adds a notification. */
+    register: protectedProcedure
+      .input(z.object({ eventId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Not signed in" });
+        }
+        const userKey = `${ctx.user.persona}:${ctx.user.id}`;
+        const event = registerCampusEvent(userKey, input.eventId);
+        if (!event) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
+        }
+        pushNotification(ctx.user.persona, ctx.user.openId, {
+          type: "success",
+          title: `Registered for ${event.title}`,
+          body: `You're on the list. It starts ${event.date} at ${event.start} (${event.location}). Added to your calendar.`,
+        });
+        return {
+          success: true,
+          event: { ...event, isRegistered: true },
+        } as const;
+      }),
+  }),
+
+  calendar: router({
+    /** Persona-scoped schedule + registered events. */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return { events: [] };
+      const userKey = `${ctx.user.persona}:${ctx.user.id}`;
+      return { events: getCalendarEvents(ctx.user.persona, userKey) };
+    }),
+  }),
+
+  notifications: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return [];
+      return listNotifications(ctx.user.persona, ctx.user.openId);
+    }),
+    markRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Not signed in" });
+        }
+        markNotificationRead(ctx.user.persona, ctx.user.openId, input.id);
+        return { success: true } as const;
+      }),
+    markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not signed in" });
+      }
+      const count = markAllNotificationsRead(ctx.user.persona, ctx.user.openId);
+      return { success: true, marked: count } as const;
     }),
   }),
 

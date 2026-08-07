@@ -8,6 +8,7 @@ import { Reveal } from "@/components/dashboard/Reveal";
 import { ApprovalsPanel } from "@/components/dashboard/ApprovalsPanel";
 import { ExplainableChat } from "@/components/ExplainableChat";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Area,
   AreaChart,
@@ -26,6 +27,7 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
+  FileWarning,
   GraduationCap,
   Landmark,
   Lightbulb,
@@ -33,12 +35,15 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
 import {
   AI_RECOMMENDATIONS,
   ALERTS,
+  BUDGET_OVERVIEW,
   DEPT_ATTENDANCE,
   FACULTY_PERFORMANCE,
+  GRIEVANCES,
   INTERNSHIP_STATS,
   PLACEMENT_STATS,
   PRINCIPAL_NOTIFICATIONS,
@@ -333,6 +338,87 @@ export default function PrincipalDashboard() {
                 </li>
               ))}
             </ul>
+          </SectionCard>
+        </Reveal>
+      </div>
+
+      {/* Grievances + budget */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Reveal>
+          <SectionCard
+            title="Student grievances"
+            description="Open cases awaiting resolution"
+            action={
+              <Badge variant="secondary">
+                {GRIEVANCES.filter((g) => g.status === "pending").length} pending
+              </Badge>
+            }
+          >
+            <ul className="space-y-3">
+              {GRIEVANCES.map((g) => (
+                <li
+                  key={g.id}
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition-colors hover:border-amber-200 hover:bg-amber-50/30"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                    <FileWarning className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900">{g.student}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{g.category}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge
+                      className={
+                        g.status === "pending"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-emerald-50 text-emerald-700"
+                      }
+                    >
+                      {g.status}
+                    </Badge>
+                    <span className="text-[11px] text-slate-400">{g.age}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <SectionCard
+            title="Budget & administration"
+            description="FY 2026-27 allocation vs. spend"
+            action={
+              <Badge className="gap-1 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                <Wallet className="size-3" /> ₹1.2 Cr total
+              </Badge>
+            }
+          >
+            <ul className="space-y-4">
+              {BUDGET_OVERVIEW.map((b) => {
+                const pct = Math.round((b.spent / b.allocated) * 100);
+                return (
+                  <li key={b.category}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">{b.category}</span>
+                      <span className="text-slate-500">
+                        {b.spent} / {b.allocated} {b.unit} · {pct}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={pct}
+                      className={`mt-1.5 h-2 ${pct > 80 ? "bg-rose-100" : pct > 60 ? "bg-amber-100" : "bg-emerald-100"}`}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs leading-relaxed text-slate-500">
+              Overall utilization is <span className="font-semibold text-slate-700">62%</span> —
+              reallocate surplus from Infrastructure toward the proposed AI research lab
+              before the Q3 review.
+            </p>
           </SectionCard>
         </Reveal>
       </div>

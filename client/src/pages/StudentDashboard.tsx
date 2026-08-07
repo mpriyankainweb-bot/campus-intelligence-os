@@ -25,20 +25,32 @@ import {
   BookOpen,
   Briefcase,
   CalendarClock,
+  FileCheck2,
   GraduationCap,
   ListChecks,
   Sparkles,
   Target,
   TrendingUp,
+  Trophy,
+  Users2,
+  Wallet,
 } from "lucide-react";
 import {
   ASSIGNMENTS,
   ATTENDANCE_TREND,
+  CLUB_RECOMMENDATIONS,
+  FEE_STATUS,
+  INTERNAL_MARKS,
   INTERNSHIP_RECOMMENDATIONS,
   PERFORMANCE,
   PLACEMENT_OPPORTUNITIES,
+  RESUME_SCORE,
+  SCHOLARSHIP_STATUS,
+  SEMESTER_PROGRESS,
   STUDENT_NOTIFICATIONS,
   TIMETABLE,
+  UPCOMING_EXAMS,
+  WORKSHOPS,
 } from "@/lib/dashboardData";
 
 const NAV: NavItem[] = [
@@ -376,6 +388,186 @@ export default function StudentDashboard() {
                 </li>
               ))}
             </ul>
+          </SectionCard>
+        </Reveal>
+      </div>
+
+      {/* Exams, internal marks, semester progress */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <Reveal className="lg:col-span-3">
+          <SectionCard
+            title="Upcoming exams & internal marks"
+            description="What's on the academic calendar"
+            action={<Badge variant="secondary">{UPCOMING_EXAMS.length} exams</Badge>}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Exams</p>
+                <ul className="space-y-2">
+                  {UPCOMING_EXAMS.map((e) => (
+                    <li key={e.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-2.5">
+                      <p className="text-xs font-semibold text-slate-800">{e.title}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {e.date} · {e.time} · {e.hall}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Internal marks</p>
+                <ul className="space-y-2.5">
+                  {INTERNAL_MARKS.map((m) => (
+                    <li key={m.course}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-700">{m.course}</span>
+                        <span className="text-slate-500">
+                          {m.internal}/{m.max}
+                        </span>
+                      </div>
+                      <Progress
+                        value={(m.internal / m.max) * 100}
+                        className="mt-1 h-1.5"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </SectionCard>
+        </Reveal>
+
+        <Reveal delay={0.08} className="lg:col-span-2">
+          <SectionCard
+            title="Semester progress & resume"
+            description="Where you stand right now"
+          >
+            <div className="flex items-center gap-4">
+              <div className="relative flex size-20 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                <div
+                  className="absolute inset-1 rounded-full"
+                  style={{
+                    background: `conic-gradient(#059669 ${RESUME_SCORE * 3.6}deg, #e2e8f0 0deg)`,
+                  }}
+                />
+                <div className="flex size-16 items-center justify-center rounded-full bg-white">
+                  <span className="text-lg font-bold text-slate-900">{RESUME_SCORE}</span>
+                </div>
+              </div>
+              <div>
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                  <FileCheck2 className="size-4 text-blue-500" /> Resume score
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {RESUME_SCORE >= 80
+                    ? "Strong — placement-cell ready. Add project metrics to push higher."
+                    : "Good start — add project details and internship experience to reach 85+."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-700">
+                  {SEMESTER_PROGRESS.semester} progress
+                </span>
+                <span className="text-slate-500">
+                  {SEMESTER_PROGRESS.weeksCompleted}/{SEMESTER_PROGRESS.totalWeeks} weeks
+                </span>
+              </div>
+              <Progress
+                value={(SEMESTER_PROGRESS.weeksCompleted / SEMESTER_PROGRESS.totalWeeks) * 100}
+                className="mt-2 h-2"
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+                  <Wallet className="size-3.5" /> Fees
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{FEE_STATUS.status}</p>
+                <p className="text-[11px] text-slate-500">
+                  {FEE_STATUS.paid} of {FEE_STATUS.total}
+                </p>
+              </div>
+              <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-violet-800">
+                  <Trophy className="size-3.5" /> Scholarship
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{SCHOLARSHIP_STATUS.status}</p>
+                <p className="text-[11px] text-slate-500">{SCHOLARSHIP_STATUS.amount}</p>
+              </div>
+            </div>
+          </SectionCard>
+        </Reveal>
+      </div>
+
+      {/* Clubs, workshops, scholarships */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Reveal>
+          <SectionCard
+            title="Club recommendations"
+            description="Clubs matched to your interests"
+            action={
+              <Badge className="gap-1 bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+                <Sparkles className="size-3" /> AI matches
+              </Badge>
+            }
+          >
+            <ul className="space-y-3">
+              {CLUB_RECOMMENDATIONS.map((c) => (
+                <li key={c.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition-colors hover:border-violet-200 hover:bg-violet-50/40">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
+                    <Users2 className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900">{c.name}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{c.why}</p>
+                  </div>
+                  <Badge variant="secondary">{c.match}</Badge>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <SectionCard
+            title="Workshops & scholarships"
+            description="Opportunities to grow and fund your journey"
+          >
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Workshops</p>
+            <ul className="space-y-2">
+              {WORKSHOPS.map((w) => (
+                <li key={w.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-slate-800">{w.title}</p>
+                    <p className="text-[11px] text-slate-500">{w.date}</p>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className={
+                      w.status === "Open"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                    }
+                  >
+                    {w.status}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/50 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-violet-900">{SCHOLARSHIP_STATUS.name}</span>
+                <span className="text-violet-600">{SCHOLARSHIP_STATUS.progress}%</span>
+              </div>
+              <Progress value={SCHOLARSHIP_STATUS.progress} className="mt-2 h-1.5" />
+              <p className="mt-2 text-[11px] text-slate-500">
+                {SCHOLARSHIP_STATUS.amount} · {SCHOLARSHIP_STATUS.status}
+              </p>
+            </div>
           </SectionCard>
         </Reveal>
       </div>

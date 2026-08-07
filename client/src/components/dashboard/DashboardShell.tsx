@@ -19,13 +19,30 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { GraduationCap, LogOut, Menu, type LucideIcon } from "lucide-react";
+import {
+  BellRing,
+  CalendarDays,
+  GraduationCap,
+  LogOut,
+  Menu,
+  Ticket,
+  type LucideIcon,
+} from "lucide-react";
 import { NotificationBell, type NotificationItem } from "./NotificationBell";
+
+/** Workspace pages available to every persona (route-level navigation). */
+const WORKSPACE_PAGES: NavItem[] = [
+  { id: "page-calendar", label: "Calendar", icon: CalendarDays, path: "/calendar" },
+  { id: "page-events", label: "Events", icon: Ticket, path: "/events" },
+  { id: "page-notifications", label: "Notifications", icon: BellRing, path: "/notifications" },
+];
 
 export type NavItem = {
   id: string;
   label: string;
   icon: LucideIcon;
+  /** When set, the item navigates to this route instead of scrolling to a section. */
+  path?: string;
 };
 
 function initials(name?: string | null) {
@@ -54,22 +71,50 @@ export function DashboardShell({
   const [active, setActive] = useState(nav[0]?.id ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const navigate = (id: string) => {
-    setActive(id);
+  const navigate = (item: NavItem) => {
+    setActive(item.id);
     setSheetOpen(false);
+    if (item.path) {
+      setLocation(item.path);
+      return;
+    }
     requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
 
-  const NavList = ({ onNavigate }: { onNavigate: (id: string) => void }) => (
-    <nav className="flex-1 space-y-1 px-3 py-4">
+  const NavList = ({ onNavigate }: { onNavigate: (item: NavItem) => void }) => (
+    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <p className="px-3 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Workspace
+      </p>
+      {WORKSPACE_PAGES.map((item) => {
+        const isActive = active === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item)}
+            className={cn(
+              "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+              isActive
+                ? "bg-white/10 text-white"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            )}
+          >
+            <item.icon className={cn("size-4.5", isActive ? "text-emerald-300" : "text-slate-500 group-hover:text-slate-300")} />
+            {item.label}
+          </button>
+        );
+      })}
+      <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Dashboard
+      </p>
       {nav.map((item) => {
         const isActive = active === item.id;
         return (
           <button
             key={item.id}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => onNavigate(item)}
             className={cn(
               "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
               isActive

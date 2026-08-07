@@ -45,6 +45,23 @@ export interface ComponentOutput {
 }
 
 /**
+ * True when the LLM produced a real, usable answer (not a failure envelope).
+ * Components use this to fall back to deterministic local computation when
+ * the model is unavailable (missing key, quota exhausted, rate limited).
+ */
+function isUsableLLM(
+  response: Awaited<ReturnType<typeof callGeminiStructured>>
+): boolean {
+  return (
+    response.confidence > 0 &&
+    typeof response.result === "string" &&
+    response.result.length > 0 &&
+    !response.result.startsWith("I wasn't able to generate") &&
+    !response.result.startsWith("The AI assistant isn't configured")
+  );
+}
+
+/**
  * Academic Intelligence Component.
  * Analyzes student academic standing, performance, and intervention needs.
  */
@@ -74,10 +91,28 @@ Respond with JSON:
 `;
 
   const response = await callGeminiStructured(prompt);
+  if (isUsableLLM(response)) {
+    return {
+      result: response.result,
+      evidence: response.evidence || [],
+      confidence: response.confidence,
+      source_type: "computed",
+    };
+  }
+
+  // LLM unavailable — deterministic analysis from the records.
+  const avg = records.length
+    ? records.reduce((s, r) => s + parseFloat(r.attendancePercent.toString()), 0) /
+      records.length
+    : 0;
+  const probation = records.filter((r) => r.standing !== "good");
   return {
-    result: response.result,
-    evidence: response.evidence || [],
-    confidence: response.confidence,
+    result: `Academic standing summary: average attendance ${avg.toFixed(1)}% across ${records.length || 0} courses, ${records.length - probation.length || 0} in good standing${probation.length ? `, ${probation.length} flagged (${probation.map((r) => r.course).join(", ")})` : ""}.`,
+    evidence: records.map((r) => ({
+      source: "academic_records",
+      content: `${r.course}: ${r.attendancePercent}% attendance, ${r.standing} standing`,
+    })),
+    confidence: 0.75,
     source_type: "computed",
   };
 }
@@ -128,10 +163,45 @@ Respond with JSON:
 `;
 
   const response = await callGeminiStructured(prompt);
+  if (isUsableLLM(response)) {
+    return {
+      result: response.result,
+      evidence: response.evidence || [],
+      confidence: response.confidence,
+      source_type: "derived",
+    };
+  }
+
+  // LLM unavailable — deterministic eligibility screening from the records.
+  const avgAttendance = records.length
+    ? records.reduce((s, r) => s + parseFloat(r.attendancePercent.toString()), 0) /
+      records.length
+    : 0;
+  const inGoodStanding = records.every((r) => r.standing === "good");
+  const lines = opportunities.map((o) => {
+    const criteria = (o.eligibilityCriteria ?? {}) as Record<string, unknown>;
+    const minAtt =
+      typeof criteria.minAttendance === "number" ? criteria.minAttendance : 0;
+    const minCgpa = typeof criteria.minCgpa === "number" ? criteria.minCgpa : 0;
+    const needsGood = criteria.standing === "good";
+    const attOk = avgAttendance >= minAtt;
+    const standingOk = !needsGood || inGoodStanding;
+    const eligible = attOk && standingOk;
+    return `${o.title}: ${eligible ? "ELIGIBLE" : "not currently eligible"} (needs ${minAtt}% attendance${needsGood ? ", good standing" : ""}${minCgpa ? `, CGPA ${minCgpa}+` : ""})`;
+  });
   return {
-    result: response.result,
-    evidence: response.evidence || [],
-    confidence: response.confidence,
+    result: `Based on your records (avg attendance ${avgAttendance.toFixed(1)}%, ${inGoodStanding ? "good standing" : "some courses flagged"}):\n${lines.join("\n")}`,
+    evidence: [
+      ...records.map((r) => ({
+        source: "academic_records",
+        content: `${r.course}: ${r.attendancePercent}% attendance, ${r.standing}`,
+      })),
+      ...opportunities.map((o) => ({
+        source: "career_opportunities",
+        content: `${o.title} — ${JSON.stringify(o.eligibilityCriteria)}`,
+      })),
+    ],
+    confidence: 0.7,
     source_type: "derived",
   };
 }
@@ -185,18 +255,30 @@ Respond with JSON:
 }
 `;
 
+  const chunkEvidence = sourceChunks.map((c) => ({
+    source: "policy",
+    content: c.content,
+    doc_id: c.docId,
+    section: c.section,
+  }));
+
   const response = await callGeminiStructured(prompt);
+  if (isUsableLLM(response)) {
+    return {
+      result: response.result,
+      evidence: chunkEvidence,
+      // Demo fallback: only report strong confidence when the keyword match is
+      // solid; otherwise let the orchestrator's precedence decide.
+      confidence: isDemo ? Math.max(response.confidence, 0.5) : response.confidence,
+      source_type: "rag",
+    };
+  }
+
+  // LLM unavailable — surface the retrieved policy excerpts directly.
   return {
-    result: response.result,
-    evidence: sourceChunks.map((c) => ({
-      source: "policy",
-      content: c.content,
-      doc_id: c.docId,
-      section: c.section,
-    })),
-    // Demo fallback: only report strong confidence when the keyword match is
-    // solid; otherwise let the orchestrator's precedence decide.
-    confidence: isDemo ? Math.max(response.confidence, 0.5) : response.confidence,
+    result: `From the institutional policies (${sourceChunks[0]?.section ?? "policy"}):\n${sourceChunks.map((c) => c.content).join("\n\n")}`,
+    evidence: chunkEvidence,
+    confidence: isDemo ? 0.6 : 0.5,
     source_type: "rag",
   };
 }
@@ -239,10 +321,25 @@ Respond with JSON:
 `;
 
   const response = await callGeminiStructured(prompt);
+  if (isUsableLLM(response)) {
+    return {
+      result: response.result,
+      evidence: response.evidence || [],
+      confidence: response.confidence,
+      source_type: "computed",
+    };
+  }
+
   return {
-    result: response.result,
-    evidence: response.evidence || [],
-    confidence: response.confidence,
+    result: `Average attendance ${avgAttendance.toFixed(1)}% across ${records.length || 0} courses (${records.filter((r) => r.standing === "good").length} good standing, ${records.filter((r) => r.standing !== "good").length} flagged).`,
+    evidence: [
+      { source: "analytics", content: `avg attendance ${avgAttendance.toFixed(1)}%` },
+      {
+        source: "analytics",
+        content: `${records.length || 0} courses tracked, ${records.filter((r) => r.standing !== "good").length} needing attention`,
+      },
+    ],
+    confidence: 0.7,
     source_type: "computed",
   };
 }
@@ -274,10 +371,28 @@ Respond with JSON:
 `;
 
   const response = await callGeminiStructured(prompt);
+  if (isUsableLLM(response)) {
+    return {
+      result: response.result,
+      evidence: response.evidence || [],
+      confidence: response.confidence,
+      source_type: "knowledge",
+    };
+  }
+
+  // LLM unavailable — return a sensible role-appropriate draft template.
+  const draft =
+    userPersona === "principal"
+      ? `Subject: Institutional update\n\nDear team,\n\nPlease find attached the latest update. High-impact items require your review before the end of the week.\n\nBest regards,\nOffice of the Principal`
+      : userPersona === "faculty"
+        ? `Subject: Class update\n\nDear students,\n\nA quick update on the course. Please review the latest announcements and complete pending submissions on time.\n\nBest regards,\nFaculty`
+        : `Subject: Follow-up\n\nDear Sir/Madam,\n\nI would like to follow up on the above matter and would appreciate your guidance.\n\nRegards,\nStudent`;
   return {
-    result: response.result,
-    evidence: response.evidence || [],
-    confidence: response.confidence,
+    result: draft,
+    evidence: [
+      { source: "communication_draft", content: "Role-appropriate email template" },
+    ],
+    confidence: 0.6,
     source_type: "knowledge",
   };
 }

@@ -295,9 +295,9 @@ class SDKServer {
         const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");
         await db.upsertUser({
           openId: userInfo.openId,
-          name: userInfo.name || null,
+          fullName: userInfo.name || null,
           email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          persona: "student",
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
@@ -313,6 +313,7 @@ class SDKServer {
 
     await db.upsertUser({
       openId: user.openId,
+      persona: "student",
       lastSignedIn: signedInAt,
     });
 
@@ -335,10 +336,10 @@ function buildCronUser(
   return {
     id: -1,
     openId: userInfo.openId,
-    name: userInfo.name || "Manus Scheduled Task",
+    fullName: userInfo.name || "Manus Scheduled Task",
     email: null,
-    loginMethod: null,
-    role: "user",
+    persona: "student",
+    department: null,
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,

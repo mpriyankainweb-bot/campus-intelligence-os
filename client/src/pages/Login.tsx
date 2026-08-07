@@ -4,22 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-export default function Home() {
+export default function Login() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleDemoLogin = async (persona: "student" | "faculty" | "principal") => {
     setLoading(persona);
     try {
-      const response = await fetch("/api/trpc/auth.me", {
-        method: "GET",
+      // Create demo session by calling a login endpoint
+      const response = await fetch("/api/trpc/auth.demoLogin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ persona }),
       });
 
       if (response.ok) {
+        // Redirect to dashboard
         setLocation(`/dashboard/${persona}`);
       }
     } catch (error) {
-      console.error("Navigation failed:", error);
+      console.error("Login failed:", error);
     } finally {
       setLoading(null);
     }

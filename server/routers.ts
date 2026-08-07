@@ -13,6 +13,11 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { academicRecords, careerOpportunities } from "../drizzle/schema";
 import { DEMO_ACADEMIC_RECORDS, DEMO_CAREER_OPPORTUNITIES } from "./lib/demo/data";
+import {
+  getDemoPendingActions,
+  demoApproveAction,
+  demoRejectAction,
+} from "./lib/demo/actions";
 
 export const appRouter = router({
   system: systemRouter,
@@ -180,13 +185,30 @@ export const appRouter = router({
     if (!ctx.user) return [];
 
     const pending = await getPendingActions(undefined, ctx.user.id);
-    return pending.map((action) => ({
-      id: action.id,
-      userId: action.userId,
-      actionType: action.actionType,
-      actionData: action.actionData,
-      createdAt: action.createdAt,
-    }));
+    if (pending.length > 0) {
+      return pending.map((action) => ({
+        id: action.id,
+        userId: action.userId,
+        actionType: action.actionType,
+        actionData: action.actionData,
+        createdAt: action.createdAt,
+      }));
+    }
+
+    // Demo mode (no database): surface seeded approvals for staff personas so
+    // the approval workflow is fully demonstrable before Supabase is wired.
+    const database = await db.getDb();
+    if (!database && (ctx.user.persona === "faculty" || ctx.user.persona === "principal")) {
+      return getDemoPendingActions().map((action) => ({
+        id: action.id,
+        userId: 0,
+        actionType: action.actionType,
+        actionData: action.actionData,
+        createdAt: action.createdAt,
+      }));
+    }
+
+    return [];
   }),
 
   actionsApprove: protectedProcedure
@@ -194,6 +216,13 @@ export const appRouter = router({
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Not signed in" });
+      }
+      const database = await db.getDb();
+      if (!database) {
+        if (!demoApproveAction(input.id)) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Action not found" });
+        }
+        return { success: true } as const;
       }
       await approveAction(input.id, ctx.user.id);
       return { success: true } as const;
@@ -204,6 +233,13 @@ export const appRouter = router({
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Not signed in" });
+      }
+      const database = await db.getDb();
+      if (!database) {
+        if (!demoRejectAction(input.id)) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Action not found" });
+        }
+        return { success: true } as const;
       }
       await rejectAction(input.id, ctx.user.id);
       return { success: true } as const;

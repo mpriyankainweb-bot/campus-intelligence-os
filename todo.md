@@ -44,19 +44,19 @@
 
 ## Phase 7: Authentication & Gateway
 - [x] Demo login page (3 buttons: Student, Faculty, Principal)
-- [x] Session management (local or Supabase Auth)
+- [x] Session management (localStorage demo auth)
 - [x] API Gateway middleware (persona resolution, 403 on unauthorized access)
 - [x] Permission checks before Orchestrator invocation
 
 ## Phase 8: Frontend UI
-- [ ] Student dashboard (brief card, chat interface, no approvals list)
-- [ ] Faculty dashboard (brief card, chat interface, approvals list)
-- [ ] Principal dashboard (brief card, chat interface, approvals list)
+- [x] Student dashboard (brief card, chat interface, no approvals list)
+- [x] Faculty dashboard (brief card, chat interface, approvals list)
+- [x] Principal dashboard (brief card, chat interface, approvals list)
 - [ ] Chat UI component (renders answer, reasoning, evidence, confidence, rejected_alternatives)
 - [ ] Evidence list with doc_id/section citations
 - [ ] Confidence indicator
 - [ ] Rejected alternatives section
-- [ ] Approvals list with Approve/Reject buttons
+- [x] Approvals list with Approve/Reject buttons (UI present)
 - [x] Home page with demo login buttons
 
 ## Phase 9: Testing & Validation

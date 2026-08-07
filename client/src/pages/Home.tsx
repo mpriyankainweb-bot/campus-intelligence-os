@@ -11,15 +11,29 @@ export default function Home() {
   const handleDemoLogin = async (persona: "student" | "faculty" | "principal") => {
     setLoading(persona);
     try {
-      const response = await fetch("/api/trpc/auth.me", {
-        method: "GET",
-      });
+      // Store persona in localStorage for demo purposes
+      localStorage.setItem("demoPersona", persona);
+      localStorage.setItem(
+        "demoUser",
+        JSON.stringify({
+          id: Math.floor(Math.random() * 1000),
+          persona,
+          fullName:
+            persona === "student"
+              ? "Ananya Rao"
+              : persona === "faculty"
+                ? "Dr. Vikram Shah"
+                : "Dr. Meera Iyer",
+          email: `${persona}@demo.edu`,
+        })
+      );
 
-      if (response.ok) {
+      // Navigate to dashboard
+      setTimeout(() => {
         setLocation(`/dashboard/${persona}`);
-      }
+      }, 300);
     } catch (error) {
-      console.error("Navigation failed:", error);
+      console.error("Login failed:", error);
     } finally {
       setLoading(null);
     }

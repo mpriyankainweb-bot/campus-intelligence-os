@@ -52,10 +52,10 @@
 - [x] Student dashboard (brief card, chat interface, no approvals list)
 - [x] Faculty dashboard (brief card, chat interface, approvals list)
 - [x] Principal dashboard (brief card, chat interface, approvals list)
-- [ ] Chat UI component (renders answer, reasoning, evidence, confidence, rejected_alternatives)
-- [ ] Evidence list with doc_id/section citations
-- [ ] Confidence indicator
-- [ ] Rejected alternatives section
+- [x] Chat UI component (renders answer, reasoning, evidence, confidence, rejected_alternatives)
+- [x] Evidence list with doc_id/section citations
+- [x] Confidence indicator
+- [x] Rejected alternatives section
 - [x] Approvals list with Approve/Reject buttons (UI present)
 - [x] Home page with demo login buttons
 

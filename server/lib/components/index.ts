@@ -1,4 +1,4 @@
-import { callClaudeStructured, StructuredResponse } from "../llm/claude";
+import { callGeminiStructured, StructuredResponse } from "../llm/gemini";
 import { retrieveChunks } from "../rag/pipeline";
 import { getDb } from "../../db";
 import { academicRecords, careerOpportunities } from "../../../drizzle/schema";
@@ -55,7 +55,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     evidence: response.evidence || [],
@@ -120,7 +120,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     evidence: response.evidence || [],
@@ -164,7 +164,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     evidence: chunks.map((c) => ({
@@ -227,7 +227,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     evidence: response.evidence || [],
@@ -262,7 +262,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     evidence: response.evidence || [],

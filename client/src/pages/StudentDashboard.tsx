@@ -1,19 +1,13 @@
-import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExplainableChat } from "@/components/ExplainableChat";
 
 export default function StudentDashboard() {
-  const { user: authUser } = useAuth();
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const demoUser = localStorage.getItem("demoUser");
-    if (demoUser) {
-      setUser(JSON.parse(demoUser));
-    }
-  }, []);
+  const { user: authUser } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/",
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -21,7 +15,7 @@ export default function StudentDashboard() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Student Dashboard</h1>
           <div className="text-sm text-slate-600">
-            Welcome, {user?.fullName || "Student"}
+            Welcome, {authUser?.fullName || "Student"}
           </div>
         </div>
 

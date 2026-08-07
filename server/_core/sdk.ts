@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { verifySupabaseToken, type SupabaseVerifiedUser } from "./supabase";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -154,7 +155,15 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    let secret = ENV.cookieSecret;
+    if (!secret) {
+      // Allow demo login before any keys are configured. Production must set
+      // JWT_SECRET — this fallback is deterministic and therefore not secure.
+      console.warn(
+        "[Auth] JWT_SECRET is not configured — using an insecure development fallback. Set JWT_SECRET in production."
+      );
+      secret = "campus-intelligence-os-dev-only-secret";
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -211,19 +220,18 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
+      // The JWT signature is the real security boundary. `appId`/`name` are
+      // optional because demo and Supabase sessions sign without a Manus app
+      // id (VITE_APP_ID unset) — only `openId` is required.
+      if (!isNonEmptyString(openId)) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
       return {
         openId,
-        appId,
-        name,
+        appId: isNonEmptyString(appId) ? appId : "",
+        name: isNonEmptyString(name) ? name : "",
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -256,18 +264,33 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
-    // 1. Prefer the session cookie (regular OAuth login).
     const cookies = this.parseCookies(req.headers.cookie);
+    const authHeader = req.headers.authorization;
+    const bearerToken =
+      typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : null;
+
+    // 1. Supabase Auth: the client forwards its session access token as a
+    //    Bearer token. Verify it against Supabase and map the user to a local
+    //    profile row (created lazily on first sign-in).
+    if (bearerToken) {
+      const supabaseUser = await verifySupabaseToken(bearerToken);
+      if (supabaseUser) {
+        return this.authenticateSupabaseUser(supabaseUser);
+      }
+    }
+
+    // 2. Prefer the session cookie (regular OAuth login).
     let sessionToken = cookies.get(COOKIE_NAME);
 
-    // 2. Fallback to the Authorization header (Preview auto-login via
+    // 3. Fallback to the Authorization header (Preview auto-login via
     //    sessionStorage), used when the browser blocks iframe cookies such as
-    //    Safari ITP, private browsing, or iOS/Android WebView.
+    //    Safari ITP, private browsing, or iOS/Android WebView. The header is
+    //    also where the legacy Manus session token lands; Supabase tokens were
+    //    already handled above.
     if (!sessionToken) {
-      const authHeader = req.headers.authorization;
-      if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-        sessionToken = authHeader.slice(7);
-      }
+      sessionToken = bearerToken ?? undefined;
     }
 
     const session = await this.verifySession(sessionToken);
@@ -288,6 +311,15 @@ class SDKServer {
     const sessionUserId = session.openId;
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
+
+    // Demo personas work even before a database is configured: derive the
+    // profile from the openId (`demo-<persona>`) instead of requiring a row.
+    if (!user && sessionUserId.startsWith(DEMO_OPEN_ID_PREFIX)) {
+      const persona = sessionUserId.slice(DEMO_OPEN_ID_PREFIX.length);
+      if ((PERSONAS as readonly string[]).includes(persona)) {
+        return buildDemoUser(persona as Persona, session.name);
+      }
+    }
 
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
@@ -319,9 +351,90 @@ class SDKServer {
 
     return user;
   }
+
+  /**
+   * Map a verified Supabase user to a local profile row, creating it on first
+   * sign-in. Falls back to a synthetic in-memory profile when the database is
+   * unavailable so the app still boots for local development.
+   */
+  private async authenticateSupabaseUser(
+    supabaseUser: SupabaseVerifiedUser
+  ): Promise<AuthenticatedUser> {
+    const signedInAt = new Date();
+    let user = await db.getUserByOpenId(supabaseUser.id);
+
+    if (!user) {
+      try {
+        await db.upsertUser({
+          openId: supabaseUser.id,
+          fullName: supabaseUser.fullName,
+          email: supabaseUser.email,
+          persona: supabaseUser.persona,
+          department: supabaseUser.department,
+          lastSignedIn: signedInAt,
+        });
+        user = await db.getUserByOpenId(supabaseUser.id);
+      } catch (error) {
+        console.warn("[Auth] Failed to persist Supabase user:", error);
+      }
+    } else {
+      try {
+        await db.upsertUser({
+          openId: user.openId,
+          fullName: supabaseUser.fullName ?? user.fullName,
+          email: supabaseUser.email ?? user.email,
+          persona: supabaseUser.persona,
+          lastSignedIn: signedInAt,
+        });
+      } catch (error) {
+        console.warn("[Auth] Failed to update Supabase user:", error);
+      }
+    }
+
+    if (user) return user;
+
+    // Database unavailable: serve a synthetic profile so the UI works.
+    const now = new Date();
+    return {
+      id: -1,
+      openId: supabaseUser.id,
+      fullName: supabaseUser.fullName,
+      email: supabaseUser.email,
+      persona: supabaseUser.persona,
+      department: supabaseUser.department,
+      createdAt: now,
+      updatedAt: now,
+      lastSignedIn: now,
+    } as AuthenticatedUser;
+  }
 }
 
 const CRON_OPEN_ID_PREFIX = "cron_";
+const DEMO_OPEN_ID_PREFIX = "demo-";
+const PERSONAS = ["student", "faculty", "principal"] as const;
+
+type Persona = (typeof PERSONAS)[number];
+
+function buildDemoUser(persona: Persona, name: string): AuthenticatedUser {
+  const now = new Date();
+  const displayNames: Record<Persona, { fullName: string; department: string | null }> = {
+    student: { fullName: "Ananya Rao", department: "CSE" },
+    faculty: { fullName: "Dr. Vikram Shah", department: "Computer Science" },
+    principal: { fullName: "Dr. Meera Iyer", department: null },
+  };
+  const profile = displayNames[persona];
+  return {
+    id: -1,
+    openId: `${DEMO_OPEN_ID_PREFIX}${persona}`,
+    fullName: name || profile.fullName,
+    email: `${persona}@demo.edu`,
+    persona,
+    department: profile.department,
+    createdAt: now,
+    updatedAt: now,
+    lastSignedIn: now,
+  } as AuthenticatedUser;
+}
 
 /** Result of `sdk.authenticateRequest`. Cron callbacks set `isCron=true` and `taskUid`; see `/home/ubuntu/skills/webdev-periodic-updates/SKILL.md`. */
 export type AuthenticatedUser = User & {

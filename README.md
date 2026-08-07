@@ -11,14 +11,16 @@ An enterprise-grade AI-powered institutional assistant platform with role-based 
 - **RAG Pipeline**: Local embeddings (@xenova/all-MiniLM-L6-v2) with pgvector retrieval
 - **Memory System**: Conversation memory, long-term facts, execution state, and in-process shared context
 - **Approval Workflows**: High-impact actions require role-based approval
-- **Demo Authentication**: Three login buttons (no OAuth required for demo)
+- **Supabase Auth**: Email/password sign-in & sign-up with a persona picker at signup (Student / Faculty / Principal)
+- **Demo Authentication**: One-click demo personas (no account required)
 
 ## Technology Stack
 
 - **Frontend**: React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui
 - **Backend**: Express 4 + tRPC 11 + Node.js
-- **Database**: MySQL/TiDB with Drizzle ORM
-- **LLM**: Claude 3.5 Sonnet via @anthropic-ai/sdk
+- **Database**: Supabase Postgres with Drizzle ORM (postgres-js driver)
+- **Auth**: Supabase Auth (email/password) + optional Manus OAuth
+- **LLM**: Google Gemini (gemini-2.5-flash) via the Gemini REST API
 - **Embeddings**: @xenova/transformers (all-MiniLM-L6-v2)
 - **Deployment**: Vercel (frontend/backend) + Managed Database
 
@@ -28,8 +30,8 @@ An enterprise-grade AI-powered institutional assistant platform with role-based 
 
 - Node.js 22+
 - pnpm 10+
-- Anthropic API key
-- Database connection string
+- A Gemini API key (for AI chat — demo personas work without it)
+- A Supabase project (Auth + Postgres)
 
 ### 1. Install Dependencies
 
@@ -39,42 +41,59 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Create `.env.local` with the following variables:
+Create `.env.local` with the following variables (or set them in the platform's Keys/API keys tab):
 
 ```env
-DATABASE_URL=mysql://user:password@host:port/database
-ANTHROPIC_API_KEY=sk-ant-...
+# Supabase (Auth + Database)
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...   # service_role key (server-side only)
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...      # anon/public key (browser)
+DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
+
+# LLM + sessions
+GEMINI_API_KEY=AIza...   # Google AI Studio / Gemini API key
+GEMINI_MODEL=gemini-2.5-flash   # optional, defaults to gemini-2.5-flash
 JWT_SECRET=your-secret-key-here
+
+# Optional: legacy Manus OAuth login
 VITE_APP_ID=your-app-id
 OAUTH_SERVER_URL=https://api.manus.im
 VITE_OAUTH_PORTAL_URL=https://portal.manus.im
 ```
 
+> **Note:** `DATABASE_URL` should point at your **Supabase Postgres** connection string (Project Settings → Database → Connection string). The app still boots without it (demo personas and the landing page work), but users, memory, and RAG need it.
+
 ### 3. Set Up Database
 
 ```bash
-# Generate and apply migrations
+# Generate and apply migrations, then push them to Supabase
+pnpm db:push
+# or, step by step:
 pnpm drizzle-kit generate
 pnpm drizzle-kit migrate
 ```
 
+The migration creates all tables plus the persona/standing/status enums. New signups and demo logins create their `users` rows lazily.
+
 ### 4. Seed Demo Data
 
-The database schema includes tables for:
-- Users (with persona: student, faculty, principal)
-- Academic records
+Seed the demo personas, academic records, career opportunities, pending approval actions and the RAG policy documents (idempotent — safe to re-run):
+
+```bash
+pnpm db:seed
+```
+
+The seed creates:
+- The three demo users (student / faculty / principal)
+- Academic records for the demo student
 - Career opportunities
-- Documents and document chunks (for RAG)
-- Conversation memory
-- Long-term memory
-- Execution state (for approvals)
-- Simulated actions
+- Two pending approval actions (student → faculty, faculty → principal)
+- The three policy documents chunked and embedded for RAG (first run downloads the local embedding model)
 
-Seed data is automatically created during migration.
+### 5. Ingest Policy Documents (alternative)
 
-### 5. Ingest Policy Documents
-
-Before using the RAG pipeline, ingest the three policy documents:
+If you prefer to ingest documents manually, use the ingest endpoint:
 
 ```bash
 # Document 1: Internship Placement Policy
@@ -116,24 +135,29 @@ pnpm dev
 
 The application will start on http://localhost:3000 (or next available port).
 
+## Authentication
+
+- **Sign up**: Enter your name, email, password and pick a persona (Student / Faculty / Principal). The server creates a Supabase Auth user (auto-confirmed, so no email verification delay) with the persona stored in `user_metadata`, then signs you in and routes you to your role dashboard.
+- **Sign in**: Existing Supabase users authenticate with email + password; the session token is forwarded to the API as a Bearer token and verified server-side.
+- **Demo personas**: One click, no account needed. Demo users get a `demo-<persona>` profile so you can explore all three dashboards instantly.
+- **Manus OAuth**: The legacy “Sign in with Manus” flow is still available on the landing page.
+
 ## Demo Personas
 
-Three demo users are pre-configured:
+| Persona | Name | Route |
+|---------|------|-------|
+| Student | Ananya Rao | `/dashboard/student` |
+| Faculty | Dr. Vikram Shah | `/dashboard/faculty` |
+| Principal | Dr. Meera Iyer | `/dashboard/principal` |
 
-| Persona | Name | Email | Password |
-|---------|------|-------|----------|
-| Student | Ananya Rao | student@demo.edu | demo1234 |
-| Faculty | Dr. Vikram Shah | faculty@demo.edu | demo1234 |
-| Principal | Dr. Meera Iyer | principal@demo.edu | demo1234 |
-
-Click the corresponding login button on the home page to access each dashboard.
+Click the corresponding card on the home page to access each dashboard.
 
 ## API Endpoints
 
 All endpoints are under `/api/trpc`:
 
 ### Chat
-- **POST** `/api/trpc/chat` - Send a query to the orchestrator
+- **POST** `/api/trpc/chat` - Send a query to the orchestrator (Gemini-backed)
   - Input: `{ query: string, sessionId: string }`
   - Output: Explainable response with reasoning, evidence, confidence, rejected alternatives
 
@@ -144,6 +168,10 @@ All endpoints are under `/api/trpc`:
 ### Actions
 - **GET** `/api/trpc/actions` - List pending approvals for current user
   - Output: Array of pending actions
+- **POST** `/api/trpc/actionsApprove` - Approve a pending action
+  - Input: `{ id: number }`
+- **POST** `/api/trpc/actionsReject` - Reject a pending action
+  - Input: `{ id: number }`
 
 ### Ingest
 - **POST** `/api/trpc/ingest` - Ingest a policy document
@@ -210,7 +238,7 @@ LAYER 6  External Systems  Calendar, Email, Institutional DB
 ## Build Order (Mandatory Items)
 
 1. Database schema + seed data
-2. LLM helper (Claude structured responses)
+2. LLM helper (Gemini structured responses)
 3. RAG pipeline (chunking, embedding, retrieval)
 4. All five Intelligence Components
 5. Full Orchestrator (6-stage pipeline)
@@ -252,13 +280,13 @@ vercel deploy
 
 ### Environment Variables (Production)
 
-Set the same `.env.local` variables in Vercel project settings:
-- `DATABASE_URL`
-- `ANTHROPIC_API_KEY`
+Set the same variables in Vercel project settings (Supabase values must be the production project's):
+- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (server)
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (browser)
+- `DATABASE_URL` (Supabase Postgres)
+- `GEMINI_API_KEY`
 - `JWT_SECRET`
-- `VITE_APP_ID`
-- `OAUTH_SERVER_URL`
-- `VITE_OAUTH_PORTAL_URL`
+- `VITE_APP_ID` / `OAUTH_SERVER_URL` / `VITE_OAUTH_PORTAL_URL` (optional, legacy Manus login)
 
 ## Troubleshooting
 
@@ -273,8 +301,8 @@ Set the same `.env.local` variables in Vercel project settings:
 - Run migrations: `pnpm drizzle-kit migrate`
 
 ### LLM calls failing
-- Verify `ANTHROPIC_API_KEY` is set correctly
-- Check API quota and rate limits
+- Verify `GEMINI_API_KEY` is set correctly (Keys/API keys tab, or `.env.local`)
+- Check API quota and rate limits on the Gemini API
 - Review error logs in `.manus-logs/devserver.log`
 
 ### RAG retrieval returning no results

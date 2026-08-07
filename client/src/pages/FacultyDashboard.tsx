@@ -1,20 +1,29 @@
-import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { ExplainableChat } from "@/components/ExplainableChat";
+import { trpc } from "@/lib/trpc";
 
 export default function FacultyDashboard() {
-  const { user: authUser } = useAuth();
-  const [user, setUser] = useState<any>(null);
+  const { user: authUser } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/",
+  });
 
-  useEffect(() => {
-    const demoUser = localStorage.getItem("demoUser");
-    if (demoUser) {
-      setUser(JSON.parse(demoUser));
-    }
-  }, []);
+  const actionsQuery = trpc.actions.useQuery(undefined, {
+    enabled: Boolean(authUser),
+    retry: false,
+  });
+  const approveMutation = trpc.actionsApprove.useMutation({
+    onSuccess: () => actionsQuery.refetch(),
+  });
+  const rejectMutation = trpc.actionsReject.useMutation({
+    onSuccess: () => actionsQuery.refetch(),
+  });
+
+  const pendingActions = actionsQuery.data ?? [];
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -22,7 +31,7 @@ export default function FacultyDashboard() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
           <div className="text-sm text-slate-600">
-            Welcome, {user?.fullName || "Faculty"}
+            Welcome, {authUser?.fullName || "Faculty"}
           </div>
         </div>
 
@@ -42,7 +51,7 @@ export default function FacultyDashboard() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-700">Pending Approvals</p>
-                <Badge className="bg-yellow-100 text-yellow-800">2</Badge>
+                <Badge className="bg-yellow-100 text-yellow-800">{pendingActions.length}</Badge>
               </div>
             </CardContent>
           </Card>
@@ -55,18 +64,56 @@ export default function FacultyDashboard() {
             <CardTitle className="text-lg">Pending Approvals</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 border rounded bg-slate-50">
-                <div>
-                  <p className="font-semibold">Communication to Department</p>
-                  <p className="text-sm text-slate-600">Requires approval before sending</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Reject</Button>
-                  <Button size="sm">Approve</Button>
-                </div>
+            {pendingActions.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                {actionsQuery.isLoading ? "Loading approvals…" : "No pending approvals right now."}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pendingActions.map((action) => {
+                  const data = (action.actionData ?? {}) as {
+                    title?: string;
+                    description?: string;
+                    impact?: string;
+                  };
+                  const busy =
+                    approveMutation.isPending || rejectMutation.isPending;
+                  return (
+                    <div
+                      key={action.id}
+                      className="flex justify-between items-center p-3 border rounded bg-slate-50"
+                    >
+                      <div>
+                        <p className="font-semibold">{data.title || action.actionType}</p>
+                        <p className="text-sm text-slate-600">{data.description || "Requires approval"}</p>
+                        {data.impact && (
+                          <span className="inline-block mt-1 text-[11px] font-medium uppercase tracking-wide text-yellow-700">
+                            {data.impact} impact
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => rejectMutation.mutate({ id: action.id })}
+                        >
+                          {rejectMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Reject"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => approveMutation.mutate({ id: action.id })}
+                        >
+                          {approveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Approve"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

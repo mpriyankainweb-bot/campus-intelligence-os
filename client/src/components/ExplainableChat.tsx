@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface Message {
   id: string;
@@ -18,72 +20,57 @@ interface Message {
 }
 
 export function ExplainableChat() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const chatMutation = trpc.chat.useMutation();
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
+    const trimmed = input.trim();
+    if (!trimmed || chatMutation.isPending) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: input,
+      content: trimmed,
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    setLoading(true);
 
     try {
-      const response = await fetch("/api/trpc/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: input,
-          sessionId: "demo-session",
-        }),
-      });
+      // The chat procedure runs the multi-agent orchestrator (Gemini-backed)
+      // and returns the explainable answer envelope.
+      const sessionId = user?.openId ? `session-${user.openId}` : "demo-session";
+      const data = await chatMutation.mutateAsync({ query: trimmed, sessionId });
 
-      if (response.ok) {
-        const data = await response.json();
-        
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "assistant",
-          content: data.result || "No response generated",
-          reasoning: data.reasoning || "",
-          evidence: data.evidence || [],
-          confidence: data.confidence !== undefined ? data.confidence : 0.5,
-          rejected_alternatives: data.rejected_alternatives || [],
-        };
-
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "assistant",
-          content: "Error communicating with the AI assistant",
-          confidence: 0,
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } catch (error) {
-      console.error("Chat error:", error);
-      const errorMessage: Message = {
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content: "Failed to send message. Please try again.",
-        confidence: 0,
+        content: data.result || "No response generated",
+        reasoning: data.reasoning || "",
+        evidence: data.evidence || [],
+        confidence: data.confidence !== undefined ? data.confidence : 0.5,
+        rejected_alternatives: data.rejected_alternatives || [],
       };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          type: "assistant",
+          content:
+            "Failed to reach the AI assistant. Please make sure you're signed in, then try again.",
+          confidence: 0,
+        },
+      ]);
     }
   };
 
@@ -112,7 +99,7 @@ export function ExplainableChat() {
                       : "bg-slate-100 text-slate-900"
                   }`}
                 >
-                  <p className="text-sm font-medium">{message.content}</p>
+                  <p className="text-sm font-medium whitespace-pre-wrap">{message.content}</p>
 
                   {message.type === "assistant" && message.reasoning && (
                     <Collapsible className="mt-3 border-t pt-2">
@@ -177,7 +164,7 @@ export function ExplainableChat() {
                 </div>
               </div>
             ))}
-            {loading && (
+            {chatMutation.isPending && (
               <div className="flex justify-start">
                 <div className="bg-slate-100 px-4 py-3 rounded-lg">
                   <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
@@ -193,12 +180,16 @@ export function ExplainableChat() {
             placeholder="Ask me anything..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            disabled={loading}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            disabled={chatMutation.isPending}
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} disabled={loading || !input.trim()}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
+          <Button onClick={handleSendMessage} disabled={chatMutation.isPending || !input.trim()}>
+            {chatMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Send"
+            )}
           </Button>
         </div>
       </CardContent>

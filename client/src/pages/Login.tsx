@@ -3,25 +3,20 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+  const demoLogin = trpc.auth.demoLogin.useMutation();
 
   const handleDemoLogin = async (persona: "student" | "faculty" | "principal") => {
     setLoading(persona);
     try {
-      // Create demo session by calling a login endpoint
-      const response = await fetch("/api/trpc/auth.demoLogin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ persona }),
-      });
-
-      if (response.ok) {
-        // Redirect to dashboard
-        setLocation(`/dashboard/${persona}`);
-      }
+      const result = await demoLogin.mutateAsync({ persona });
+      await utils.auth.me.invalidate();
+      setLocation(result.redirectTo);
     } catch (error) {
       console.error("Login failed:", error);
     } finally {

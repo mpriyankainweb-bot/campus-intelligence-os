@@ -1,4 +1,4 @@
-import { callClaudeStructured, StructuredResponse } from "../llm/claude";
+import { callGeminiStructured, StructuredResponse } from "../llm/gemini";
 import {
   academicIntelligence,
   careerIntelligence,
@@ -57,7 +57,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return (response.result as any)?.intent || "general";
 }
 
@@ -83,7 +83,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return (response.result as any) || { components: [], reasoning: "" };
 }
 
@@ -217,7 +217,7 @@ Respond with JSON:
 }
 `;
 
-  const response = await callClaudeStructured(prompt);
+  const response = await callGeminiStructured(prompt);
   return {
     result: response.result,
     reasoning: response.reasoning,

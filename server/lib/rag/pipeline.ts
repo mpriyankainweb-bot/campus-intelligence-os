@@ -65,14 +65,17 @@ export async function ingestDocument(
   }
 
   // Insert document
-  const result = await db.insert(documents).values({
-    title,
-    docType,
-    content,
-    effectiveDate,
-  });
+  const result = await db
+    .insert(documents)
+    .values({
+      title,
+      docType,
+      content,
+      effectiveDate,
+    })
+    .returning({ id: documents.id });
 
-  const docId = result[0].insertId as number;
+  const docId = result[0].id;
 
   // Chunk and embed
   const chunks = chunkText(content);
@@ -115,7 +118,8 @@ export async function retrieveChunks(
 > {
   const db = await getDb();
   if (!db) {
-    throw new Error("Database not available");
+    console.warn("[RAG] Database not available — returning no chunks.");
+    return [];
   }
 
   // Generate query embedding

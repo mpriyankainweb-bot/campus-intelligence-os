@@ -28,7 +28,10 @@ export async function getConversationMemory(
   if (record.length === 0) return [];
 
   try {
-    return JSON.parse(record[0].messages as any);
+    return (record[0].messages as unknown as Array<{
+      role: "user" | "assistant";
+      content: string;
+    }>) ?? [];
   } catch {
     return [];
   }
@@ -51,13 +54,13 @@ export async function saveConversationMemory(
   if (existing.length > 0) {
     await db
       .update(conversationMemory)
-      .set({ messages: JSON.stringify(messages) as any })
+      .set({ messages: messages as any })
       .where(eq(conversationMemory.userId, userId) && eq(conversationMemory.sessionId, sessionId));
   } else {
     await db.insert(conversationMemory).values({
       userId,
       sessionId,
-      messages: JSON.stringify(messages) as any,
+      messages: messages as any,
     });
   }
 }
@@ -123,15 +126,18 @@ export async function createAction(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(executionState).values({
-    userId,
-    actionType,
-    actionData,
-    approverId,
-    status: "pending",
-  });
+  const result = await db
+    .insert(executionState)
+    .values({
+      userId,
+      actionType,
+      actionData,
+      approverId,
+      status: "pending",
+    })
+    .returning({ id: executionState.id });
 
-  return result[0].insertId as number;
+  return result[0].id;
 }
 
 export async function approveAction(actionId: number, approverId: number): Promise<void> {

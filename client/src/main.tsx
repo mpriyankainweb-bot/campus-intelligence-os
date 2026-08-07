@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
+import { supabase } from "./lib/supabase";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -42,11 +43,25 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      headers() {
-        // Preview auto-login fallback: when the browser blocks iframe cookies
-        // (Safari ITP / private browsing / WebView), the runtime mirrors the
-        // session into sessionStorage so we can forward it as a Bearer token.
-        // The regular OAuth cookie flow keeps working and takes priority server-side.
+      async headers() {
+        // 1. Supabase Auth: forward the session access token as a Bearer token.
+        //    The server verifies it against Supabase and resolves the user.
+        if (supabase) {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
+            if (token) {
+              return { Authorization: `Bearer ${token}` };
+            }
+          } catch {
+            // Supabase session unavailable
+          }
+        }
+
+        // 2. Preview auto-login fallback: when the browser blocks iframe cookies
+        //    (Safari ITP / private browsing / WebView), the runtime mirrors the
+        //    session into sessionStorage so we can forward it as a Bearer token.
+        //    The regular OAuth cookie flow keeps working and takes priority server-side.
         try {
           const raw = sessionStorage.getItem("manus-cookie");
           if (raw) {

@@ -25,14 +25,18 @@ export interface StructuredResponse {
   source_type?: "rag" | "computed" | "derived" | "knowledge";
 }
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 // Model alias fallbacks: some API keys are provisioned against a subset of
 // model versions, so on a 404/empty response we retry with the next alias.
+// gemini-3.5-flash is the newest flash model available to the configured key;
+// gemini-2.5-flash is rejected ("no longer available to new users") so it
+// sits below the reliable aliases.
 const MODEL_FALLBACKS = [
+  "gemini-3.5-flash",
   "gemini-flash-latest",
-  "gemini-2.5-flash",
   "gemini-2.0-flash",
+  "gemini-2.5-flash",
 ];
 
 const getApiKey = (): string =>

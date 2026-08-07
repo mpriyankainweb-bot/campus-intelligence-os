@@ -20,7 +20,7 @@ An enterprise-grade AI-powered institutional assistant platform with role-based 
 - **Backend**: Express 4 + tRPC 11 + Node.js
 - **Database**: Supabase Postgres with Drizzle ORM (postgres-js driver)
 - **Auth**: Supabase Auth (email/password) + optional Manus OAuth
-- **LLM**: Google Gemini (gemini-flash-latest) via the Gemini REST API, with automatic model fallbacks
+- **LLM**: Google Gemini (gemini-3.5-flash) via the Gemini REST API, with automatic model fallbacks
 - **Embeddings**: @xenova/transformers (all-MiniLM-L6-v2)
 - **Deployment**: Vercel (frontend/backend) + Managed Database
 
@@ -53,7 +53,7 @@ DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.poole
 
 # LLM + sessions
 GEMINI_API_KEY=AIza...   # Google AI Studio / Gemini API key
-GEMINI_MODEL=gemini-flash-latest   # optional; defaults to gemini-flash-latest (fallbacks: gemini-2.5-flash, gemini-2.0-flash)
+GEMINI_MODEL=gemini-3.5-flash   # optional; defaults to gemini-3.5-flash (fallbacks: gemini-flash-latest, gemini-2.0-flash, gemini-2.5-flash)
 JWT_SECRET=your-secret-key-here
 
 # Optional: legacy Manus OAuth login

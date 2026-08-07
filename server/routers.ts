@@ -10,6 +10,9 @@ import { orchestrate } from "./lib/orchestrator/index";
 import { ingestDocument } from "./lib/rag/pipeline";
 import { getPendingActions, approveAction, rejectAction } from "./lib/memory/store";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { academicRecords, careerOpportunities } from "../drizzle/schema";
+import { DEMO_ACADEMIC_RECORDS, DEMO_CAREER_OPPORTUNITIES } from "./lib/demo/data";
 
 export const appRouter = router({
   system: systemRouter,
@@ -205,6 +208,38 @@ export const appRouter = router({
       await rejectAction(input.id, ctx.user.id);
       return { success: true } as const;
     }),
+
+  dashboard: router({
+    /** Academic records for the current user — DB when available, else demo data. */
+    academics: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return DEMO_ACADEMIC_RECORDS;
+      try {
+        const database = await db.getDb();
+        if (!database) return DEMO_ACADEMIC_RECORDS;
+        const rows = await database
+          .select()
+          .from(academicRecords)
+          .where(eq(academicRecords.studentId, ctx.user.id));
+        return rows.length > 0 ? rows : DEMO_ACADEMIC_RECORDS;
+      } catch (error) {
+        console.warn("[Dashboard] academics fallback:", error);
+        return DEMO_ACADEMIC_RECORDS;
+      }
+    }),
+
+    /** Career opportunities — DB when available, else demo data. */
+    opportunities: protectedProcedure.query(async () => {
+      try {
+        const database = await db.getDb();
+        if (!database) return DEMO_CAREER_OPPORTUNITIES;
+        const rows = await database.select().from(careerOpportunities);
+        return rows.length > 0 ? rows : DEMO_CAREER_OPPORTUNITIES;
+      } catch (error) {
+        console.warn("[Dashboard] opportunities fallback:", error);
+        return DEMO_CAREER_OPPORTUNITIES;
+      }
+    }),
+  }),
 
   ingest: publicProcedure
     .input(

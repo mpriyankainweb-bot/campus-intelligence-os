@@ -1,4 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+// Load local dev env (Keys-tab vars still take precedence via process.env).
+// `.env.local` holds the Gemini key and model for the sandbox dev server.
+dotenv.config({ path: [".env.local", ".env"] });
 import express from "express";
 import { createServer } from "http";
 import net from "net";

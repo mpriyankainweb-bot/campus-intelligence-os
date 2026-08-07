@@ -25,7 +25,15 @@ export interface StructuredResponse {
   source_type?: "rag" | "computed" | "derived" | "knowledge";
 }
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-flash-latest";
+
+// Model alias fallbacks: some API keys are provisioned against a subset of
+// model versions, so on a 404/empty response we retry with the next alias.
+const MODEL_FALLBACKS = [
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+];
 
 const getApiKey = (): string =>
   process.env.GEMINI_API_KEY ||
@@ -33,8 +41,15 @@ const getApiKey = (): string =>
   process.env.GEMINI_API_KEY_SERVER ||
   "";
 
-const getModel = (): string =>
-  process.env.GEMINI_MODEL || DEFAULT_MODEL;
+const getModels = (): string[] => {
+  const configured = (process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  if (configured && !configured.includes(",")) {
+    return Array.from(new Set([configured, ...MODEL_FALLBACKS]));
+  }
+  return Array.from(
+    new Set([...configured.split(",").map(s => s.trim()).filter(Boolean), ...MODEL_FALLBACKS])
+  );
+};
 
 const NOT_CONFIGURED_MSG =
   "The AI assistant isn't configured yet — add your Gemini API key (GEMINI_API_KEY) in the Keys tab to enable chat.";
@@ -55,47 +70,70 @@ async function generateText(
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const model = getModel();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
-  )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const body: Record<string, unknown> = {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens,
-      responseMimeType: "application/json",
-    },
-  };
+  let lastError: unknown = new Error("No model could be used");
+  for (const model of getModels()) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        model
+      )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  if (systemPrompt) {
-    body.systemInstruction = { parts: [{ text: systemPrompt }] };
+      const body: Record<string, unknown> = {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens,
+          responseMimeType: "application/json",
+        },
+      };
+
+      if (systemPrompt) {
+        body.systemInstruction = { parts: [{ text: systemPrompt }] };
+      }
+
+      // 429 (quota/rate limit) retries with growing backoff — free-tier keys
+      // rate-limit after bursts, and limits usually clear within seconds.
+      for (let attempt = 0; ; attempt++) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (response.status === 429 && attempt < 2) {
+          await sleep(2000 * (attempt + 1));
+          continue;
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          lastError = new Error(
+            `Gemini ${model} failed: ${response.status} ${response.statusText}${errorText ? ` — ${errorText.slice(0, 200)}` : ""}`
+          );
+          break;
+        }
+
+        const data = (await response.json()) as {
+          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        };
+
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        if (!text) {
+          lastError = new Error(`Gemini ${model} returned an empty response`);
+          break;
+        }
+
+        return stripCodeFence(text);
+      }
+    } catch (error) {
+      lastError = error;
+    }
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(
-      `Gemini request failed: ${response.status} ${response.statusText}${errorText ? ` — ${errorText.slice(0, 300)}` : ""}`
-    );
-  }
-
-  const data = (await response.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  if (!text) {
-    throw new Error("Gemini returned an empty response");
-  }
-
-  return stripCodeFence(text);
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Gemini request failed after trying all models");
 }
 
 /** Gemini sometimes wraps JSON in ``` fences even in JSON mode. */
@@ -182,7 +220,7 @@ export async function callGeminiStructured(
   }
 
   try {
-    const text = await generateText(prompt, systemPrompt, 2048);
+    const text = await generateText(prompt, systemPrompt, 4096);
     const parsed: unknown = JSON.parse(text);
     return normalizeStructured(parsed);
   } catch (error) {
@@ -204,7 +242,7 @@ export async function callGeminiText(
   }
 
   try {
-    return await generateText(prompt, systemPrompt, 1024);
+    return await generateText(prompt, systemPrompt, 2048);
   } catch (error) {
     console.error("[LLM] Gemini text call failed:", error);
     return GENERIC_FAILURE_MSG;

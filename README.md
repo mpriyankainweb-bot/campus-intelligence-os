@@ -1,328 +1,482 @@
-# Campus Intelligence OS
+<div align="center">
 
-An enterprise-grade AI-powered institutional assistant platform with role-based access, explainable multi-agent reasoning, RAG knowledge pipeline, and rich memory architecture.
+# 🎓 Campus Intelligence OS
 
-## Features
+### An Autonomous Multi-Agent AI Smart Campus Operating System
 
-- **Three User Personas**: Student, Faculty, and Principal with role-specific dashboards and permissions
-- **Multi-Agent Orchestrator**: 6-stage pipeline (Understand → Plan → Route → Verify → Replan → Synthesize)
-- **Five Intelligence Components**: Academic, Career, Knowledge (RAG), Analytics, and Communication
-- **Explainable AI**: Every response includes reasoning, evidence with citations, confidence scores, and rejected alternatives
-- **RAG Pipeline**: Local embeddings (@xenova/all-MiniLM-L6-v2) with pgvector retrieval
-- **Memory System**: Conversation memory, long-term facts, execution state, and in-process shared context
-- **Approval Workflows**: High-impact actions require role-based approval
-- **Supabase Auth**: Email/password sign-in & sign-up with a persona picker at signup (Student / Faculty / Principal)
-- **Demo Authentication**: One-click demo personas (no account required)
+**Built for the AgentX National Level Hackathon 2026**
 
-## Technology Stack
+`React` · `TypeScript` · `Express` · `tRPC` · `Gemini` · `Supabase` · `Tailwind CSS` · `Vite`
 
-- **Frontend**: React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui
-- **Backend**: Express 4 + tRPC 11 + Node.js
-- **Database**: Supabase Postgres with Drizzle ORM (postgres-js driver)
-- **Auth**: Supabase Auth (email/password) + optional Manus OAuth
-- **LLM**: Google Gemini (gemini-3.5-flash) via the Gemini REST API, with automatic model fallbacks
-- **Embeddings**: @xenova/transformers (all-MiniLM-L6-v2)
-- **Deployment**: Vercel (frontend/backend) + Managed Database
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
+[![Gemini](https://img.shields.io/badge/Gemini-3.5--Flash-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-2ED573?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+[![tRPC](https://img.shields.io/badge/tRPC-11-2596BE?style=for-the-badge&logo=trpc&logoColor=white)](https://trpc.io)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-## Setup Instructions
+**A campus that thinks for itself.** Students, faculty and principals each get an autonomous AI operating system that understands policy, reasons across specialized agents, and explains every decision.
+
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [🚀 Introduction](#introduction)
+- [🤔 Problem Statement](#problem-statement)
+- [💡 Why This Project](#why-this-project)
+- [✨ Key Features](#key-features)
+- [🧠 Multi-Agent Architecture](#multi-agent-architecture)
+- [🔄 Workflow Diagram](#workflow-diagram)
+- [🏗️ Architecture Diagram](#architecture-diagram)
+- [🛠️ Technology Stack](#technology-stack)
+- [📷 Screenshots](#screenshots)
+- [🎥 Demo Video](#demo-video)
+- [🏆 Built for AgentX National Hackathon 2026](#built-for-agentx-national-hackathon-2026)
+- [📦 Installation](#installation)
+- [🔑 Environment Variables](#environment-variables)
+- [📁 Project Structure](#project-structure)
+- [🤖 AI Workflow Example](#ai-workflow-example)
+- [✅ Hackathon Requirements Mapping](#hackathon-requirements-mapping)
+- [🔮 Future Scope](#future-scope)
+- [👥 Team](#team)
+- [📄 License](#license)
+
+---
+
+## 🚀 Introduction
+
+> **Campus Intelligence OS** is an autonomous multi-agent AI operating system for educational institutions.
+
+Traditional campus portals are *reactive* — they store data and wait for you to find it. Campus Intelligence OS is *proactive*: a fleet of specialized AI agents — Academic, Placement, Knowledge/RAG, Analytics, Communication, Calendar, Events and Notification — collaborate under a central **Orchestrator Agent** to answer questions, execute workflows, and deliver personalized intelligence to every role on campus.
+
+Built on a **six-stage explainable orchestration pipeline** (Understand → Plan → Route → Verify → Replan → Synthesize), the platform combines:
+
+- 🧠 **Gemini-powered reasoning** with automatic model fallbacks
+- 📚 **RAG knowledge retrieval** grounded in institutional policy documents
+- 🏛️ **Role-based access** across Student, Faculty and Principal dashboards
+- ✅ **Approval workflows** where high-impact actions require sign-off
+- 🗣️ **Explainable AI** — every answer shows its reasoning, evidence and confidence
+
+Designed, engineered and shipped as a submission for the **AgentX National Level Hackathon 2026**.
+
+---
+
+## 🤔 Problem Statement
+
+Campus life today runs on fragmented, disconnected tools that bury critical information:
+
+- 📉 **Attendance and academics** are scattered across portals, spreadsheets and notice boards — students discover problems only *after* they become crises.
+- 🧭 **Career opportunities** (internships, placements, workshops) are announced inconsistently, and students miss deadlines they were eligible for.
+- 🏢 **Faculty and administrators** juggle manual tracking — who needs intervention, which approvals are pending, how departments actually compare — with no unified view.
+- 🔍 **Institutional policy** lives in long documents nobody has time to read, so students and staff guess instead of knowing.
+- 🤷 **No personalization** — every user sees the same generic portal regardless of role, standing or goals.
+
+The result: **high-friction, high-anxiety campus operations** where the institution's own intelligence is locked inside silos.
+
+---
+
+## 💡 Why This Project
+
+Traditional campus portals are insufficient because they are **reactive databases with login screens**, not assistants. Campus Intelligence OS reimagines the campus portal as an **autonomous operating system**:
+
+| Traditional Portal | Campus Intelligence OS |
+|---|---|
+| You search for information | Agents bring it to you proactively |
+| One-size-fits-all dashboards | Role- and standing-personalized views |
+| Static FAQ answers | **Explainable AI** with reasoning + evidence + confidence |
+| Policy PDFs nobody reads | **RAG** answers grounded in actual policy text |
+| Manual approval chains | **Workflow automation** with role-based gates |
+| Separate calendars/events/notices | One intelligent, cross-linked campus OS |
+
+Autonomous agents **continuously analyze the campus context** — attendance trends, eligibility criteria, deadlines, departmental KPIs — and act: recommending internships, flagging at-risk students, scheduling registrations, and escalating decisions to the right approver. The result is a campus where **the right information reaches the right person at the right time**, with the reasoning shown.
+
+---
+
+## ✨ Key Features
+
+- 🧠 **Multi-Agent AI Orchestration** — a 6-stage pipeline (Understand → Plan → Route → Verify → Replan → Synthesize) dispatches queries across specialized agents
+- ✨ **Gemini-powered AI Assistant** — real-time reasoning with automatic model fallback (`gemini-3.5-flash` → `gemini-flash-latest` → `gemini-2.0-flash`)
+- 🎓 **Student Dashboard** — attendance trends, timetable, performance vs. class average, CGPA, internal marks, semester progress, resume score, assignments, exams, clubs, workshops, scholarships, fees
+- 🏫 **Faculty Dashboard** — class management, attendance analytics, at-risk students, assignment review, leave approvals, announcements, department performance, personal tasks
+- 🏛️ **Principal Dashboard** — institution analytics, department attendance, placement & internship statistics, faculty metrics, student insights, grievances, budget overview, AI recommendations
+- 🔐 **Personalized Login & Signup** — full name, email, password + role picker; dashboards greet the logged-in user by name
+- 🧪 **Demo Personas** — one-click Student / Faculty / Principal access with seeded data (no account required)
+- 🗣️ **Explainable AI** — every response includes reasoning, evidence with citations, confidence scores and rejected alternatives
+- 📚 **RAG Knowledge Retrieval** — institutional policies chunked, embedded (`all-MiniLM-L6-v2`) and retrieved via pgvector, with keyword-scored demo fallback
+- ✅ **Approval Workflow** — high-impact actions queue for role-based Approve / Reject
+- 📅 **Calendar** — day / week / month views with role-scoped auto-generated events (classes, exams, meetings, deadlines)
+- 🎟️ **Event Registration** — browse workshops, hackathons, seminars, placement drives; register with confirmation + calendar sync
+- 🔔 **Notification Center** — persona-scoped feeds with unread badges and mark-all-read
+- 📊 **Attendance Analytics** — trends, per-course rates, department comparisons
+- 💼 **Internship Recommendations** — AI-matched opportunities with eligibility scoring
+- 🏢 **Placement Intelligence** — eligibility-verified openings and placement statistics
+- 🎯 **Academic Insights** — standing flags, intervention needs, performance analytics
+- 🖥️ **Executive Dashboard** — institution-wide KPIs, alerts and AI-generated recommendations
+- 🛡️ **Graceful AI Fallback** — deterministic local intelligence when Gemini is unavailable or rate-limited; demo mode never breaks
+- 📱 **Responsive UI** — shadcn/ui + Tailwind + Framer Motion, polished for mobile through desktop
+
+---
+
+## 🧠 Multi-Agent Architecture
+
+Campus Intelligence OS runs a **collaborative society of agents** coordinated by an orchestrator. Each agent is a focused reasoning module with a single responsibility.
+
+### 🎛️ Orchestrator Agent
+The central coordinator. Runs the **six-stage pipeline**: classifies intent (Understand), builds an action plan (Plan), dispatches to the right agents (Route), resolves conflicts by precedence (Verify), patches weak steps (Replan), and composes the final explainable response (Synthesize). It holds conversation memory, long-term facts and shared context between stages.
+
+### 📘 Academic Agent
+Analyzes courses, grades, attendance and academic standing. Flags probation, computes averages, and surfaces intervention needs — grounding every claim in the student's actual records.
+
+### 💼 Placement Agent
+Screens career opportunities (internships, placements, fellowships) against the student's academic standing and eligibility criteria, returning an eligibility verdict with evidence.
+
+### 📚 Knowledge/RAG Agent
+Answers policy questions strictly from institutional documents. Retrieves relevant chunks from the vector store (or a keyword-scored demo corpus) and cites them — never hallucinating beyond the source material.
+
+### 📈 Analytics Agent
+Derives metrics and insights — attendance averages, good-standing vs. probation counts, trends — and explains *why* a number matters.
+
+### ✉️ Communication Agent
+Drafts role-appropriate communications (emails, notices) and flags when a message crosses an approval threshold.
+
+### 📅 Calendar Agent
+Reads the auto-generated role-scoped schedule (classes, exams, meetings, deadlines, registered events) and answers "what's on today / this week?"
+
+### 🎟️ Events Agent
+Browses the campus event catalog, recommends matches, and — on registration intent — actually registers the user, adds the event to the calendar and triggers a confirmation notification.
+
+### 🔔 Notification Agent
+Manages persona-scoped notification feeds with read/unread state; fires confirmations, alerts and reminders as workflows complete.
+
+### 🤝 How They Collaborate
+
+1. A user query enters the **Orchestrator**.
+2. The **Understand** stage classifies intent (academic / career / policy / analytics / communication / events / calendar).
+3. The **Plan** stage selects the agents required — *multiple agents for multi-part queries* — with a deterministic keyword layer guaranteeing the right set is always dispatched.
+4. The **Route** stage invokes each chosen agent in parallel; every agent returns `{ result, evidence, confidence, source_type }`.
+5. The **Verify** stage resolves conflicts via precedence (`Knowledge > Academic > Career > Analytics > Events > Calendar > Communication`).
+6. The **Synthesize** stage composes the final answer with reasoning, citations and confidence — or, if the LLM is unavailable, merges the best agent results so the system **never goes dark**.
+
+---
+
+## 🔄 Workflow Diagram
+
+```mermaid
+flowchart LR
+    U[👤 User] --> O[🎛️ Orchestrator Agent]
+    O --> S1[1. Understand<br/>Intent Classification]
+    S1 --> S2[2. Plan<br/>Agent Selection]
+    S2 --> S3[3. Route / Dispatch]
+    S3 --> A1[📘 Academic Agent]
+    S3 --> A2[💼 Placement Agent]
+    S3 --> A3[📚 Knowledge / RAG Agent]
+    S3 --> A4[📈 Analytics Agent]
+    S3 --> A5[✉️ Communication Agent]
+    S3 --> A6[📅 Calendar Agent]
+    S3 --> A7[🎟️ Events Agent]
+    A1 --> K[(📚 Knowledge Base<br/>RAG / Policies)]
+    A2 --> K
+    A3 --> K
+    A1 --> V[4. Verify<br/>Precedence Resolution]
+    A2 --> V
+    A3 --> V
+    A4 --> V
+    A5 --> V
+    A6 --> V
+    A7 --> V
+    V --> R[5. Replan<br/>Confidence Check]
+    R --> S4[6. Synthesize<br/>Explainable Answer]
+    S4 --> OO[🗣️ Reasoning + Evidence + Confidence]
+    OO --> U
+```
+
+---
+
+## 🏗️ Architecture Diagram
+
+```mermaid
+flowchart TB
+    USER[👤 User] --> WEB[⚛️ React Frontend<br/>shadcn / Tailwind / Vite]
+    WEB --> AUTH[🔐 Authentication<br/>Supabase Auth + Demo Personas + Local Fallback]
+    AUTH --> API[🌐 API Gateway<br/>Express + tRPC 11]
+    API --> ORCH[🎛️ Orchestrator Agent<br/>6-Stage Pipeline]
+    ORCH --> AGENTS[🧩 Specialized Agents]
+    AGENTS --> ACAD[📘 Academic]
+    AGENTS --> PLACE[💼 Placement]
+    AGENTS --> KNOW[📚 Knowledge / RAG]
+    AGENTS --> ANAL[📈 Analytics]
+    AGENTS --> COMM[✉️ Communication]
+    AGENTS --> CAL[📅 Calendar]
+    AGENTS --> EVE[🎟️ Events]
+    AGENTS --> NOTIF[🔔 Notification]
+    ACAD --> DB[(🗄️ Supabase Postgres<br/>Drizzle ORM)]
+    PLACE --> DB
+    ANAL --> DB
+    CAL --> DB
+    EVE --> DB
+    KNOW --> VEC[(🧠 Vector Store<br/>pgvector / local embeddings)]
+    KNOW --> DEMO[(💾 Demo Data Fallback<br/>in-memory)]
+    ORCH --> GEM[✨ Gemini AI<br/>gemini-3.5-flash + fallbacks]
+    ORCH --> MEM[🧠 Memory System<br/>Conversation / Long-term / Execution State]
+    DB -.-> DEMO
+    VEC -.-> DEMO
+```
+
+> **Note:** When Supabase is not configured, every layer falls back to rich in-memory demo data — the application never blocks on missing credentials.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · shadcn/ui · Framer Motion · Recharts · lucide-react |
+| **Backend** | Node.js 22 · Express 4 · tRPC 11 · Zod |
+| **Database** | Supabase Postgres · Drizzle ORM · postgres-js · pgvector |
+| **AI** | Google Gemini (`gemini-3.5-flash`, automatic fallbacks) · local embeddings (`@xenova/transformers` / all-MiniLM-L6-v2) |
+| **Authentication** | Supabase Auth (email/password + persona metadata) · in-memory local fallback · one-click demo personas · JWT sessions (jose) |
+| **Deployment** | Freebuff-managed hosting (Vite static + Node server) · GitHub Actions-ready |
+
+---
+
+## 📷 Screenshots
+
+> Replace the placeholders below by dropping screenshots into `docs/screenshots/` (see [Project Structure](#-project-structure)).
+
+| Home Page | Student Dashboard |
+|:---:|:---:|
+| ![Home Page](docs/screenshots/home.png) | ![Student Dashboard](docs/screenshots/student-dashboard.png) |
+
+| Faculty Dashboard | Principal Dashboard |
+|:---:|:---:|
+| ![Faculty Dashboard](docs/screenshots/faculty-dashboard.png) | ![Principal Dashboard](docs/screenshots/principal-dashboard.png) |
+
+| AI Chat | Calendar |
+|:---:|:---:|
+| ![AI Chat](docs/screenshots/chat.png) | ![Calendar](docs/screenshots/calendar.png) |
+
+| Events | Notifications |
+|:---:|:---:|
+| ![Events](docs/screenshots/events.png) | ![Notifications](docs/screenshots/notifications.png) |
+
+---
+
+## 🎥 Demo Video
+
+**Coming soon.**
+
+> Paste your YouTube or Google Drive link here after recording:
+> `https://youtube.com/...` or `https://drive.google.com/...`
+
+---
+
+## 🏆 Built for AgentX National Hackathon 2026
+
+**Campus Intelligence OS** was built as a submission for the **AgentX National Level Hackathon 2026** to demonstrate an **Autonomous Multi-Agent Smart Campus Operating System** that combines:
+
+- 🧠 Autonomous reasoning and **multi-agent orchestration**
+- 📚 Retrieval-Augmented Generation grounded in institutional policy
+- 🗂️ Long-term & conversation memory
+- 🧭 Planning, tool calling and **workflow automation**
+- 🗣️ Explainable AI with evidence, confidence and rejected alternatives
+- 🎯 Personalized recommendations for every campus role
+
+The project is a fully working product — not a mockup — with live authentication, three role dashboards, a real RAG pipeline, an approval workflow, a calendar, event registration, a notification center and a Gemini-powered assistant that degrades gracefully under rate limits.
+
+---
+
+## 📦 Installation
+
+<details>
+<summary><b>Click to expand — local setup (pnpm)</b></summary>
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm 10+
-- A Gemini API key (for AI chat — demo personas work without it)
-- A Supabase project (Auth + Postgres)
+- [Node.js](https://nodejs.org) **22+**
+- [pnpm](https://pnpm.io) **10+**
+- A [Gemini API key](https://aistudio.google.com/apikey) *(optional — demo mode works without it)*
+- A [Supabase](https://supabase.com) project *(optional — demo mode works without it)*
 
-### 1. Install Dependencies
+### 1. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure environment variables
 
-Create `.env.local` with the following variables (or set them in the platform's Keys/API keys tab):
+Create a `.env.local` file (see [Environment Variables](#-environment-variables)) or set the values in the platform's Keys/API keys tab.
 
-```env
-# Supabase (Auth + Database)
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...   # service_role key (server-side only)
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...      # anon/public key (browser)
-DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
-
-# LLM + sessions
-GEMINI_API_KEY=AIza...   # Google AI Studio / Gemini API key
-GEMINI_MODEL=gemini-3.5-flash   # optional; defaults to gemini-3.5-flash (fallbacks: gemini-flash-latest, gemini-2.0-flash, gemini-2.5-flash)
-JWT_SECRET=your-secret-key-here
-
-# Optional: legacy Manus OAuth login
-VITE_APP_ID=your-app-id
-OAUTH_SERVER_URL=https://api.manus.im
-VITE_OAUTH_PORTAL_URL=https://portal.manus.im
-```
-
-> **Note:** `DATABASE_URL` should point at your **Supabase Postgres** connection string (Project Settings → Database → Connection string). The app still boots without it (demo personas and the landing page work), but users, memory, and RAG need it.
-
-### 3. Set Up Database
+### 3. Set up the database *(optional — Supabase)*
 
 ```bash
-# Generate and apply migrations, then push them to Supabase
+# Generate + apply migrations
 pnpm db:push
-# or, step by step:
-pnpm drizzle-kit generate
-pnpm drizzle-kit migrate
-```
 
-The migration creates all tables plus the persona/standing/status enums. New signups and demo logins create their `users` rows lazily.
-
-### 4. Seed Demo Data
-
-Seed the demo personas, academic records, career opportunities, pending approval actions and the RAG policy documents (idempotent — safe to re-run):
-
-```bash
+# Seed demo users, records, opportunities, approvals and RAG documents
 pnpm db:seed
 ```
 
-The seed creates:
-- The three demo users (student / faculty / principal)
-- Academic records for the demo student
-- Career opportunities
-- Two pending approval actions (student → faculty, faculty → principal)
-- The three policy documents chunked and embedded for RAG (first run downloads the local embedding model)
-
-### 5. Ingest Policy Documents (alternative)
-
-If you prefer to ingest documents manually, use the ingest endpoint:
-
-```bash
-# Document 1: Internship Placement Policy
-curl -X POST http://localhost:3000/api/trpc/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Internship Placement Policy",
-    "docType": "placement_policy",
-    "content": "Section 1: Eligibility. Students are eligible for institution-facilitated internship placement if their overall attendance is at or above 75% and their academic standing is \"good\" at the time of application. Section 2: Probation Exception. A student on academic probation may apply for internships only with written faculty sponsor approval, and such applications are automatically flagged for Principal-level review. Section 3: Multiple Applications. Students may hold no more than two active internship applications at any time.",
-    "effectiveDate": "2026-01-01"
-  }'
-
-# Document 2: Attendance & Academic Standing Regulation
-curl -X POST http://localhost:3000/api/trpc/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Attendance & Academic Standing Regulation",
-    "docType": "regulation",
-    "content": "Section 1: Standing Categories. A student is classified \"good standing\" at 75% attendance or above across all enrolled courses. A student between 60% and 74% is classified \"probation.\" Below 60% triggers mandatory faculty intervention review. Section 2: Intervention Trigger. Any student falling into \"probation\" standing must be flagged to their course faculty within one academic week for a documented intervention plan.",
-    "effectiveDate": "2026-01-01"
-  }'
-
-# Document 3: Faculty Communication & Escalation Handbook
-curl -X POST http://localhost:3000/api/trpc/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Faculty Communication & Escalation Handbook",
-    "docType": "handbook",
-    "content": "Section 1: Scope of Faculty Action. Faculty may directly message their own enrolled students without approval. Section 2: HOD Escalation. Any communication naming a Head of Department, or any communication sent to more than one class section simultaneously, requires Principal approval before sending, regardless of content.",
-    "effectiveDate": "2026-01-01"
-  }'
-```
-
-### 6. Run Development Server
+### 4. Run the development server
 
 ```bash
 pnpm dev
 ```
 
-The application will start on http://localhost:3000 (or next available port).
+The app starts at **http://localhost:3000** (or the next available port).
 
-## Demo fallbacks
-
-Everything works even before Supabase or Gemini keys are configured:
-
-- **Demo personas** sign in instantly (session cookie, no account needed).
-- **Dashboards** render rich demo data (timetables, analytics, notifications) and switch to live Supabase data automatically once `DATABASE_URL` is set and `pnpm db:seed` has run.
-- **AI chat** answers from in-memory academic records, opportunities and a keyword-scored policy corpus when the database is unavailable, then falls back to real RAG retrieval (pgvector) when it is.
-- If `GEMINI_API_KEY` is missing, chat responds with a clear setup message instead of erroring.
-
-## Authentication
-
-- **Sign up**: Enter your name, email, password and pick a persona (Student / Faculty / Principal). The server creates a Supabase Auth user (auto-confirmed, so no email verification delay) with the persona stored in `user_metadata`, then signs you in and routes you to your role dashboard.
-- **Sign in**: Existing Supabase users authenticate with email + password; the session token is forwarded to the API as a Bearer token and verified server-side.
-- **Demo personas**: One click, no account needed. Demo users get a `demo-<persona>` profile so you can explore all three dashboards instantly.
-- **Manus OAuth**: The legacy “Sign in with Manus” flow is still available on the landing page.
-
-## Demo Personas
-
-| Persona | Name | Route |
-|---------|------|-------|
-| Student | Ananya Rao | `/dashboard/student` |
-| Faculty | Dr. Vikram Shah | `/dashboard/faculty` |
-| Principal | Dr. Meera Iyer | `/dashboard/principal` |
-
-Click the corresponding card on the home page to access each dashboard.
-
-## API Endpoints
-
-All endpoints are under `/api/trpc`:
-
-### Chat
-- **POST** `/api/trpc/chat` - Send a query to the orchestrator (Gemini-backed)
-  - Input: `{ query: string, sessionId: string }`
-  - Output: Explainable response with reasoning, evidence, confidence, rejected alternatives
-
-### Brief
-- **GET** `/api/trpc/brief` - Get persona-scoped daily brief
-  - Output: `{ title: string, content: string }`
-
-### Actions
-- **GET** `/api/trpc/actions` - List pending approvals for current user
-  - Output: Array of pending actions
-- **POST** `/api/trpc/actionsApprove` - Approve a pending action
-  - Input: `{ id: number }`
-- **POST** `/api/trpc/actionsReject` - Reject a pending action
-  - Input: `{ id: number }`
-
-### Ingest
-- **POST** `/api/trpc/ingest` - Ingest a policy document
-  - Input: `{ title: string, docType: string, content: string, effectiveDate?: string }`
-  - Output: `{ success: boolean, docId: number, chunkCount: number }`
-
-## Workflow Examples
-
-### Student Workflow
-1. Login as Student (Ananya Rao)
-2. View daily brief with attendance and opportunities
-3. Ask questions about internship eligibility
-4. Register for internships (auto-executes, no approval needed)
-
-### Faculty Workflow
-1. Login as Faculty (Dr. Vikram Shah)
-2. View teaching summary with students needing intervention
-3. Ask about specific students
-4. Draft communications (requires Principal approval if HOD-facing)
-
-### Principal Workflow
-1. Login as Principal (Dr. Meera Iyer)
-2. View executive brief with high-impact actions
-3. Review pending approvals
-4. Approve or reject high-impact actions
-
-## Architecture
-
-### Six-Layer Architecture
-
-```
-LAYER 1  Client            Web app (Student / Faculty / Principal views)
-LAYER 2  API Gateway       Auth, persona resolution, rate limiting
-LAYER 3  Orchestrator      6-stage pipeline (Understand → Plan → Verify → Replan → Synthesize)
-LAYER 4  Intelligence      Academic | Career | Knowledge | Analytics | Communication
-LAYER 5  Shared Infra      Memory | Vector Store | DB | Tool Adapters
-LAYER 6  External Systems  Calendar, Email, Institutional DB
-```
-
-### Orchestrator Pipeline
-
-1. **Understand** (LLM): Classify user intent
-2. **Plan** (LLM): Generate action plan
-3. **Route/Dispatch**: Deterministically route to components
-4. **Verify** (deterministic): Resolve conflicts via precedence (Knowledge > Academic/Career/Analytics > Communication)
-5. **Replan**: Patch affected steps if confidence is low
-6. **Synthesize** (LLM): Generate final explainable response
-
-### Memory System
-
-- **Conversation Memory**: Per-session chat history (persisted)
-- **Long-Term Memory**: Persistent facts about users (persisted)
-- **Execution State**: Pending high-impact actions (persisted)
-- **Shared Context**: In-process only, passed between orchestrator stages
-
-### RAG Pipeline
-
-1. **Chunking**: Split documents into ~2000-char chunks
-2. **Embedding**: Generate embeddings using @xenova/all-MiniLM-L6-v2
-3. **Storage**: Store embeddings in database
-4. **Retrieval**: Cosine similarity search for top-K chunks
-5. **Confidence**: Return 0 confidence if no match above threshold
-
-## Build Order (Mandatory Items)
-
-1. Database schema + seed data
-2. LLM helper (Gemini structured responses)
-3. RAG pipeline (chunking, embedding, retrieval)
-4. All five Intelligence Components
-5. Full Orchestrator (6-stage pipeline)
-6. API routes (chat, brief, actions, ingest)
-7. Authentication + Gateway middleware
-8. Frontend dashboards + chat UI
-9. Testing + validation
-10. Documentation
-
-## Testing
-
-Run tests with:
+### 5. Validate
 
 ```bash
-pnpm test
+pnpm check   # TypeScript typecheck
+pnpm test    # Vitest suite
+pnpm build   # Production build (Vite + esbuild)
 ```
 
-Key test scenarios:
-- Student workflow: login → brief → ask question → register for internship
-- Faculty workflow: login → brief → ask question → draft communication
-- Principal workflow: login → brief → ask question → approve/reject actions
-- RAG: policy questions answered from ingested chunks
-- Memory: conversation history persists across turns
-- Explainability: every response renders reasoning, evidence, confidence
-- Approval workflow: high-impact actions appear in execution_state as pending
-- Permission failure: Student accessing Faculty route returns 403
+</details>
 
-## Deployment
+---
 
-### Vercel
+## 🔑 Environment Variables
 
-```bash
-# Push to GitHub
-git push origin main
+<details>
+<summary><b>Click to expand — full reference table</b></summary>
 
-# Deploy via Vercel dashboard or CLI
-vercel deploy
+| Variable | Required | Description |
+|---|---|---|
+| `GEMINI_API_KEY` | ⭐ For AI chat | Google AI Studio / Gemini API key. Without it, the AI assistant returns a clear setup message and deterministic fallbacks engage. |
+| `GEMINI_MODEL` | No | Optional model override. Defaults to `gemini-3.5-flash` (fallbacks: `gemini-flash-latest`, `gemini-2.0-flash`, `gemini-2.5-flash`). |
+| `SUPABASE_URL` | No* | Supabase project URL (server-side auth/signup). |
+| `SUPABASE_SERVICE_ROLE_KEY` | No* | Supabase `service_role` key (server-side only — never expose to the browser). |
+| `VITE_SUPABASE_URL` | No* | Supabase project URL (browser client). |
+| `VITE_SUPABASE_ANON_KEY` | No* | Supabase `anon`/public key (browser client). |
+| `DATABASE_URL` | No* | Supabase Postgres connection string for Drizzle (users, records, RAG vectors). |
+| `JWT_SECRET` | No | Session-cookie signing secret. A development fallback exists so demo login works before any keys are set — **always set this in production**. |
+| `VITE_APP_ID` | No | Legacy Manus OAuth app id (optional). |
+| `OAUTH_SERVER_URL` | No | Legacy Manus OAuth server URL (optional). |
+| `VITE_OAUTH_PORTAL_URL` | No | Legacy Manus OAuth portal URL (optional). |
+
+*\*Without Supabase variables the application runs entirely in **demo mode** with in-memory data — signup, login, dashboards, chat, calendar, events and notifications all keep working.*
+
+</details>
+
+---
+
+## 📁 Project Structure
+
+<details>
+<summary><b>Click to expand — repository layout</b></summary>
+
+```text
+campus-intelligence-os/
+├── client/                      # React frontend (Vite)
+│   ├── src/
+│   │   ├── pages/               # Home, Login, Student/Faculty/Principal dashboards,
+│   │   │                        # Calendar, Events, Notifications
+│   │   ├── components/          # UI kit (dashboard shell, cards, charts) + ExplainableChat
+│   │   │   └── ui/              # shadcn/ui components
+│   │   ├── lib/                 # tRPC client, Supabase client, demo datasets
+│   │   └── _core/hooks/         # useAuth
+│   └── index.html
+├── server/                      # Node.js backend (Express + tRPC)
+│   ├── _core/                   # Boot, context, auth SDK, env, cookies, session
+│   ├── lib/
+│   │   ├── llm/                 # Gemini adapter (model fallbacks, JSON mode)
+│   │   ├── orchestrator/        # 6-stage multi-agent pipeline
+│   │   ├── components/          # Academic, Placement, Knowledge/RAG, Analytics,
+│   │   │                        # Communication, Calendar, Events agents
+│   │   ├── rag/                 # Chunking, local embeddings, pgvector retrieval
+│   │   ├── memory/              # Conversation, long-term, execution-state stores
+│   │   └── demo/                # In-memory demo data, events, notifications, calendar
+│   ├── routers.ts               # tRPC application router
+│   └── db.ts                    # Drizzle database access
+├── shared/                      # Shared types & constants
+├── drizzle/                     # Schema + migrations
+├── docs/screenshots/            # README screenshot placeholders
+├── .env.local                   # Local dev env (gitignored)
+└── package.json
 ```
 
-### Environment Variables (Production)
+</details>
 
-Set the same variables in Vercel project settings (Supabase values must be the production project's):
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (server)
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (browser)
-- `DATABASE_URL` (Supabase Postgres)
-- `GEMINI_API_KEY`
-- `JWT_SECRET`
-- `VITE_APP_ID` / `OAUTH_SERVER_URL` / `VITE_OAUTH_PORTAL_URL` (optional, legacy Manus login)
+---
 
-## Troubleshooting
+## 🤖 AI Workflow Example
 
-### Dev server won't start
-- Check if port 3000 is in use: `lsof -i :3000`
-- Kill existing process: `pkill -f "tsx watch"`
-- Restart: `pnpm dev`
+> **User query:** *"Am I eligible for the Google Internship?"*
 
-### Database connection fails
-- Verify `DATABASE_URL` is correct
-- Check database is running and accessible
-- Run migrations: `pnpm drizzle-kit migrate`
+| Step | Agent | What happens |
+|---|---|---|
+| 1 | **Understand** | The Orchestrator classifies the query as `career` (with academic and policy relevance). |
+| 2 | **Plan** | The Orchestrator selects **Placement + Academic + Knowledge** agents — a single question that requires three expert perspectives. |
+| 3 | **Route** | All three agents run with the user's real records: |
+| | 📘 **Academic Agent** | Pulls attendance per course (e.g., 86% DS, 78.5% OS, 62% Discrete Math) and standing flags (probation in one course). |
+| | 💼 **Placement Agent** | Loads the Google SWE Internship eligibility criteria (`minAttendance 75%`, good standing) and screens the student. |
+| | 📚 **Knowledge/RAG Agent** | Retrieves the *Internship & Placement Policy* — probation students require department-head approval. |
+| 4 | **Verify** | Precedence resolution merges the agents; policy takes priority where it applies. |
+| 5 | **Replan** | Confidence is high — no replan needed. |
+| 6 | **Synthesize** | Gemini composes: *"Not currently eligible — Discrete Mathematics is on probation (62%). You are eligible for the Open Source Contributor Program. With a faculty sponsor, you may apply to Google under the probation exception."* |
 
-### LLM calls failing
-- Verify `GEMINI_API_KEY` is set correctly (Keys/API keys tab, or `.env.local`)
-- Check API quota and rate limits on the Gemini API
-- Review error logs in `.manus-logs/devserver.log`
+**Every step returns `reasoning`, `evidence` and `confidence`** — the user can always see *why* the system answered the way it did.
 
-### RAG retrieval returning no results
-- Verify documents were ingested successfully
-- Check document chunks in database: `SELECT COUNT(*) FROM document_chunks;`
-- Try ingesting documents again if needed
+---
 
-## License
+## ✅ Hackathon Requirements Mapping
 
-MIT
+| AgentX Requirement | How Campus Intelligence OS Satisfies It |
+|---|---|
+| **Multi-Agent Architecture** | 8 specialized agents (Orchestrator, Academic, Placement, Knowledge/RAG, Analytics, Communication, Calendar, Events) + Notification agent |
+| **RAG** | Policy documents chunked → embedded (`all-MiniLM-L6-v2`) → retrieved via pgvector, with keyword-scored demo fallback |
+| **Memory** | Conversation memory (per session), long-term facts, execution state, and in-process shared context |
+| **Planning** | Orchestrator **Plan** stage selects the agents required for each query; deterministic keyword layer guarantees multi-agent dispatch |
+| **Tool Calling** | Agents act on campus tools: event registration, calendar sync, notification dispatch, approval gating |
+| **Workflow Orchestration** | 6-stage pipeline (Understand → Plan → Route → Verify → Replan → Synthesize) with precedence-based conflict resolution |
+| **Explainable AI** | Every response includes reasoning, evidence with citations, confidence scores, and rejected alternatives |
+| **Personalized Recommendations** | Role- and standing-aware dashboards: internship matching, club recommendations, intervention flags, AI institutional recommendations |
+| **Context Awareness** | Persona-scoped access, academic records, department KPIs, calendar and event state inform every agent |
+| **Error Handling** | Graceful AI fallback (deterministic local intelligence), demo-mode fallbacks, 429 retries with backoff, never blocks on missing credentials |
 
-## Support
+---
 
-For issues or questions, please refer to the specification document or contact the development team.
+## 🔮 Future Scope
+
+- 🎙️ **Voice AI** — natural-language voice interaction with the campus assistant
+- 👁️ **Vision / OCR** — scan notices, transcripts and ID cards to ingest data visually
+- 📱 **Mobile App** — native mobile experience with push notifications
+- 🔌 **MCP (Model Context Protocol)** — expose campus tools as MCP servers for external AI agents
+- 🌐 **Multilingual Support** — local-language campus communication and agent responses
+- 🧑‍🏫 **Parent Portal** — guardian views with consent-based access
+- 🏫 **Campus IoT** — smart classrooms and facilities integrated into the OS
+
+---
+
+## 👥 Team
+
+| Role | Name | GitHub |
+|---|---|---|
+| Full-Stack / AI Engineer | _Your Name_ | [@your-handle](https://github.com) |
+| Frontend Engineer | _Your Name_ | [@your-handle](https://github.com) |
+| Product / Design | _Your Name_ | [@your-handle](https://github.com) |
+| Research / Data | _Your Name_ | [@your-handle](https://github.com) |
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Campus Intelligence OS** · Built with ❤️ for the AgentX National Level Hackathon 2026
+
+*The campus that thinks for itself.*
+
+</div>

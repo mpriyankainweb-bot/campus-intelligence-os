@@ -493,16 +493,6 @@ campus-intelligence-os/
 
 ---
 
-## 👥 Team
-
-| Role | Name | GitHub |
-|---|---|---|
-| Full-Stack / AI Engineer | _Your Name_ | [@your-handle](https://github.com) |
-| Frontend Engineer | _Your Name_ | [@your-handle](https://github.com) |
-| Product / Design | _Your Name_ | [@your-handle](https://github.com) |
-| Research / Data | _Your Name_ | [@your-handle](https://github.com) |
-
----
 
 ## 📄 License
 
@@ -511,9 +501,3 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 
 <div align="center">
-
-**Campus Intelligence OS** · Built with ❤️ for the AgentX National Level Hackathon 2026
-
-*The campus that thinks for itself.*
-
-</div>

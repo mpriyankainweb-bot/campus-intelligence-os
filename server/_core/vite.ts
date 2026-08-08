@@ -48,10 +48,19 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
+  // Resolve the built client robustly across run contexts:
+  //  - bundled launcher at dist-server/index.js -> ../dist
+  //  - source run (tsx) from server/_core            -> ../../dist
+  //  - any sibling `public` folder (e.g. old dist/public layout)
+  const candidates = [
+    path.resolve(import.meta.dirname, "public"),
+    path.resolve(import.meta.dirname, "../dist"),
+    path.resolve(import.meta.dirname, "../../dist"),
+  ];
   const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "public");
+    candidates.find(p => fs.existsSync(path.join(p, "index.html"))) ??
+    candidates[0];
+
   if (!fs.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -60,7 +69,7 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // fall through to index.html if the file doesn't exist (SPA routing)
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });

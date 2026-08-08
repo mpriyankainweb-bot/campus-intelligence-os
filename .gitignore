@@ -4,8 +4,13 @@
 
 # Build outputs
 dist/
+dist-server/
 build/
 *.dist
+
+# Vercel local build output
+.vercel/
+api/index.mjs
 
 # Environment variables
 .env
@@ -112,3 +117,8 @@ temp/
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
 .project-config.json
+
+# Package manager lockfiles (pnpm is canonical)
+bun.lock
+bun.lockb
+package-lock.json

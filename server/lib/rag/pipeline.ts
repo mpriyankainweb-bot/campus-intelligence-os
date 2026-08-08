@@ -29,13 +29,28 @@ export function chunkText(text: string, maxChunkSize: number = 2000): string[] {
   return chunks;
 }
 
+import { createRequire } from "node:module";
+
+const projectRequire = createRequire(import.meta.url);
+
 /**
  * Generate embedding for text using @xenova/transformers (all-MiniLM-L6-v2).
  * Returns a vector as JSON string for storage.
+ *
+ * The transformers package ships large ONNX runtime binaries, so it is loaded
+ * lazily through a non-literal require specifier. This keeps it invisible to
+ * serverless bundlers / file tracers (it is only needed when a real database
+ * with embeddings is configured), while still working when the package is
+ * present in node_modules.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const { pipeline } = await import("@xenova/transformers");
+    const moduleName = "@xenova/transformers";
+    const transformers = await projectRequire(moduleName);
+    const pipeline = transformers.pipeline ?? transformers.default?.pipeline;
+    if (typeof pipeline !== "function") {
+      throw new Error("transformers pipeline not available");
+    }
     const extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
     const result = await extractor(text, { pooling: "mean", normalize: true });
 

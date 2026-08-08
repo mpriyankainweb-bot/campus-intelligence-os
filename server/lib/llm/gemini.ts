@@ -96,8 +96,10 @@ async function generateText(
         body.systemInstruction = { parts: [{ text: systemPrompt }] };
       }
 
-      // 429 (quota/rate limit) retries with growing backoff — free-tier keys
-      // rate-limit after bursts, and limits usually clear within seconds.
+      // 429 (quota/rate limit) with ONE short retry — free-tier keys rate-limit
+      // after bursts, and limits usually clear within seconds. Kept deliberately
+      // short so the deterministic fallback stays well under serverless
+      // function time limits (Vercel maxDuration 60s).
       for (let attempt = 0; ; attempt++) {
         const response = await fetch(url, {
           method: "POST",
@@ -105,8 +107,8 @@ async function generateText(
           body: JSON.stringify(body),
         });
 
-        if (response.status === 429 && attempt < 2) {
-          await sleep(2000 * (attempt + 1));
+        if (response.status === 429 && attempt < 1) {
+          await sleep(1000);
           continue;
         }
 

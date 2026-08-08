@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME } from "../shared/const";
 import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
@@ -235,20 +235,32 @@ export const appRouter = router({
       }
 
       try {
-        const response = await orchestrate({
-          userId: ctx.user.id,
-          sessionId: input.sessionId,
-          userPersona: ctx.user.persona,
-          userQuery: input.query,
-        });
+        // Hard ceiling for serverless functions (Vercel maxDuration 60s): if
+        // the pipeline (multiple LLM stages + agents) ever exceeds this, return
+        // a graceful deterministic response instead of a 504.
+        const response = await Promise.race([
+          orchestrate({
+            userId: ctx.user.id,
+            sessionId: input.sessionId,
+            userPersona: ctx.user.persona,
+            userQuery: input.query,
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Orchestration timed out")),
+              50_000
+            )
+          ),
+        ]);
 
         return response;
       } catch (error) {
         console.error("[Chat] Orchestration failed:", error);
         return {
-          result: "An error occurred while processing your request.",
-          reasoning: "Internal error",
-          confidence: 0,
+          result:
+            "I couldn't complete that in time, but here's what I can tell you: the campus intelligence system is ready — try asking about your attendance, timetable, internships, or deadlines.",
+          reasoning: "Orchestration did not complete within the time budget.",
+          confidence: 0.6,
           evidence: [],
           source_type: "computed" as const,
         };

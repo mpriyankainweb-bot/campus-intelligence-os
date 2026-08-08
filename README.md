@@ -40,6 +40,7 @@
 - [🏆 Built for AgentX National Hackathon 2026](#built-for-agentx-national-hackathon-2026)
 - [📦 Installation](#installation)
 - [🔑 Environment Variables](#environment-variables)
+- [🚀 Deploy to Vercel](#deploy-to-vercel)
 - [📁 Project Structure](#project-structure)
 - [🤖 AI Workflow Example](#ai-workflow-example)
 - [✅ Hackathon Requirements Mapping](#hackathon-requirements-mapping)
@@ -365,6 +366,42 @@ pnpm build   # Production build (Vite + esbuild)
 *\*Without Supabase variables the application runs entirely in **demo mode** with in-memory data — signup, login, dashboards, chat, calendar, events and notifications all keep working.*
 
 </details>
+
+---
+
+## 🚀 Deploy to Vercel
+
+The project ships as a **full-stack single serverless function** — the Vercel CDN
+serves the built React SPA from `dist/`, while `vercel.json` rewrites all API
+traffic (`/api/*`, `/manus-storage/*`) to a single Node function
+(`api/index.mjs`, pre-bundled by the build) running the Express/tRPC backend.
+SPA routes fall back to `/index.html`, so deep links like
+`/dashboard/student` work out of the box.
+
+**Zero-config:** commit & push to GitHub, then **Import** the repo in Vercel.
+The build pipeline is already configured:
+
+| Setting | Value |
+|---|---|
+| Package manager | `pnpm` (auto-detected from `pnpm-lock.yaml` + `packageManager`) |
+| Install command | `pnpm install` |
+| Build command | `pnpm run build` |
+| Output directory | `dist` |
+| Function | `api/index.mjs` (Node runtime, `maxDuration: 60`) |
+
+**Environment variables to add in Vercel → Project → Settings → Environment Variables:**
+
+| Variable | Required | Notes |
+|---|---|---|
+| `GEMINI_API_KEY` | ⭐ | Your Gemini API key — powers the AI assistant & orchestrator. |
+| `GEMINI_MODEL` | No | Defaults to `gemini-3.5-flash` with automatic fallbacks. |
+| `JWT_SECRET` | Recommended | Random string for signing session cookies (a dev fallback exists, but set this in production). |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | No | Enable real Supabase auth — omit to run in demo mode. |
+| `DATABASE_URL` | No | Supabase Postgres for Drizzle (records, RAG) — omit to run in demo mode. |
+
+> **No keys configured?** The app automatically runs in **demo mode** — signup,
+> login, dashboards, AI chat (deterministic fallbacks), calendar, events,
+> notifications and the approval workflow all work without any database.
 
 ---
 

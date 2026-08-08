@@ -244,6 +244,8 @@ export const appRouter = router({
             sessionId: input.sessionId,
             userPersona: ctx.user.persona,
             userQuery: input.query,
+            openId: ctx.user.openId ?? undefined,
+            fullName: ctx.user.fullName ?? undefined,
           }),
           new Promise<never>((_, reject) =>
             setTimeout(

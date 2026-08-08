@@ -52,7 +52,7 @@ export const DEMO_POLICY_CHUNKS: Array<{
   {
     docId: 1,
     section: "Section 3",
-    keywords: ["consequence", "shortfall", "warning", "probation", "60%", "60", "below", "counselling"],
+    keywords: ["consequence", "shortfall", "shortage", "warning", "probation", "60%", "60", "below", "counselling", "make-up"],
     content:
       "Consequences of shortfall: Students below 75% attendance will be placed on academic warning. Continued shortfall below 60% results in probation and mandatory counselling sessions.",
   },
@@ -93,15 +93,29 @@ export const DEMO_POLICY_CHUNKS: Array<{
   },
 ];
 
+/** Common words that add no retrieval signal. */
+const POLICY_STOPWORDS = new Set([
+  "what", "which", "when", "where", "who", "how", "why", "the", "and", "for", "are", "is",
+  "am", "do", "does", "did", "should", "would", "could", "will", "with", "from", "into",
+  "over", "under", "this", "that", "these", "those", "me", "my", "our", "i", "a", "an",
+  "of", "to", "in", "on", "at", "by", "its", "or", "as", "be", "been", "can", "may",
+  "not", "no", "so", "too", "very", "about", "any", "all", "also", "but", "if", "then",
+  "than", "there", "their", "they", "have", "has", "had", "please", "tell", "said",
+]);
+
 /**
  * Simple keyword-scored retrieval over the demo policy chunks — a stand-in
- * for RAG when the vector store (database) is unavailable.
+ * for RAG when the vector store (database) is unavailable. Stopwords are
+ * dropped so natural-language questions ("what rules apply...") still match
+ * the corpus precisely.
  */
 export function searchDemoPolicyChunks(query: string, topK = 3) {
   const tokens = query
     .toLowerCase()
     .split(/[^a-z0-9%]+/)
-    .filter((t) => t.length > 2);
+    .filter((t) => t.length > 2 && !POLICY_STOPWORDS.has(t));
+
+  if (tokens.length === 0) return [];
 
   return DEMO_POLICY_CHUNKS.map((chunk) => {
     const haystack = `${chunk.content} ${chunk.keywords.join(" ")}`.toLowerCase();

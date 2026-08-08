@@ -31,7 +31,7 @@ export type CalendarEvent = {
   location: string;
   type: CalendarEventType;
   description?: string;
-  source: "schedule" | "registered";
+  source: "schedule" | "registered" | "custom";
 };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -83,6 +83,29 @@ let counter = 0;
 function nextId(): string {
   counter += 1;
   return `cal-${counter}`;
+}
+
+/**
+ * Custom calendar events (in-memory, per user key).
+ *
+ * Lets the AI assistant's `createCalendarEvent` tool genuinely add events to
+ * the user's calendar instead of just describing them.
+ */
+const customEvents = new Map<string, CalendarEvent[]>();
+
+export function addCustomCalendarEvent(
+  key: string,
+  event: Omit<CalendarEvent, "id" | "source">
+): CalendarEvent {
+  const created: CalendarEvent = { ...event, id: nextId(), source: "custom" };
+  const list = customEvents.get(key) ?? [];
+  list.push(created);
+  customEvents.set(key, list);
+  return created;
+}
+
+export function listCustomCalendarEvents(key: string): CalendarEvent[] {
+  return (customEvents.get(key) ?? []).map((e) => ({ ...e }));
 }
 
 function buildStudentEvents(): CalendarEvent[] {
@@ -277,6 +300,11 @@ export function getCalendarEvents(
       description: e.description,
       source: "registered",
     });
+  }
+
+  // Merge assistant-created custom events (reminders, one-off meetings).
+  for (const e of listCustomCalendarEvents(userKey)) {
+    merged.push(e);
   }
 
   // Registering for campus events surfaces all campus events for browsing too.
